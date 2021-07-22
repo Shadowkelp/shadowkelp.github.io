@@ -8,12 +8,6 @@
   <link rel="stylesheet" href="{{ "/assets/css/code.css" | relative_url }}">
   <!-- Ubuntu font CDN from Google -->
   <link href="https://fonts.googleapis.com/css?family=Ubuntu|Ubuntu+Mono" rel="stylesheet">
-  <script>
-  var siteWidth = 1280;
-var scale = screen.width /siteWidth;
-
-document.querySelector('meta[name="viewport"]').setAttribute('content', 'width='+siteWidth+', initial-scale='+scale+'');
-  </script>
   {%- feed_meta -%}
   {%- if jekyll.environment == 'production' and site.google_analytics -%}
     {%- include google-analytics.html -%}
