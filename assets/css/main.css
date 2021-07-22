@@ -275,7 +275,7 @@ div.contact {
 
 /* Desktop Css */
 
-@media (min-width: 1200px) {
+@media (min-width: 1200px), (pointer:none), (pointer:coarse) {
     body {
         background-color: #1c2321;
     }
