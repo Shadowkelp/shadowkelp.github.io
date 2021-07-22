@@ -7,7 +7,10 @@ body {
 }
 
 .page-content.styled {
-    background-color: #e7e8eb;
+    background-color: #2b2b2b;
+
+	/* background-image: url(/assets/images/greybg.png); */
+	/* opacity: 0.75; */
 }
 
 .site-header {
@@ -59,10 +62,6 @@ a.dark-button:active {
   columns: 3;
   -webkit-columns: 3;
   -moz-columns: 3;
-}
-
-.resume-frame {
-    /* padding: 10px; */
 }
 
 .no-border {
@@ -231,6 +230,10 @@ main.page-content {
 	p.phone-p {
 		padding-left:10px;
 		margin:inherit;
+	}
+
+	.site-nav {
+		background-color: black;
 	}
 	
 @media (max-width:600px),(pointer:none) {
