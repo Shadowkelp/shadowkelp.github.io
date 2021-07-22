@@ -1,0 +1,65 @@
+figure pre {
+    background-color: #1c2321;
+    color: #99D7F9;
+}
+
+code {
+    background-color: #1c2321;
+    color: #99D7F9;
+    font-family: "Ubuntu Mono";
+    line-height: 1 !important;
+}
+
+code span {
+    font-weight: normal !important;
+}
+
+code.language-plaintext {
+    background-color: #1c2321;
+    color: #e7e8eb;
+}
+
+span.k {
+    /* Keyword */
+    color: #409CD6;
+}
+
+span.nn {
+    /* Namespace */
+    color: #4EC9B0 !important;
+}
+
+span.nc {
+    /* Class */
+    color: #4EC9B0 !important;
+}
+
+span.nf {
+    /* Method */
+    color: #DCDCAA !important;
+}
+
+span.n {
+    /* Field */
+    color: #99D7F9 !important;
+}
+
+span.kt {
+    /* Primitive */
+    color: #409CD6 !important;
+}
+
+span.s {
+    /* String */
+    color: #CE9178 !important;
+}
+
+span.p {
+    /* Symbol */
+    color: #e7e8eb !important;
+}
+
+span.m {
+    /* Integer */
+    color: #B5CEA8 !important;
+}
