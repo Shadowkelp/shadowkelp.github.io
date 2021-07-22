@@ -138,65 +138,237 @@ main.page-content {
 }
 
 .columnl {
-    float: left;
-    width: 60%;
-    padding: 10px;
-    padding-left: 40px;
-    padding-right: 20px;
-    padding-top: 25px;
-  }
+		width: 60%;
+		padding: 10px;
+		padding-left: 40px;
+		padding-right: 20px;
+		padding-top: 25px;
+	}
+	.columnr {
+		width: 33%;
+		padding: 10px;
+		padding-left: 20px;
+		padding-top: 25px;
+		display: inline-block;
+	}
+	.row {
+		display: flex;
+	}
+	.row:after {
+		content: "";
+		display: table;
+		clear: both;
+	}
+	.h1title {
+		font-weight: 600;
+		display: inline-block;
+		padding-bottom: 5px;
+		position: relative;
+	}
+	.h1title:before {
+		content: "";
+		position: absolute;
+		float: left;
+		width: 70px;
+		height: 2px;
+		bottom: 0;
+		border-bottom: 3px solid rgb(191, 197, 193);
+	}
+	ul.no-bullets {
+		list-style-type: none;
+		margin: 0;
+		padding: 0;
+	}
+	p.contact {
+		display: flex;
+		width: 180px;
+	}
+	p.contact:before {
+		content: "@";
+		padding-right: 4px;
+	}
+	#resume-shadow {
+		border: 1px solid rgb(194, 194, 194);
+        text-align: revert;
+		/* box-shadow: 20px 12px #b3b3b3; */
+	}
+	h1.name-title {
+		font-weight: bold;
+		padding: 30px;
+		padding-bottom: 10px;
+		letter-spacing: 15px;
+	}
+	h2.title {
+		font-weight: 600;
+		margin-bottom: auto;
+		padding: 25px;
+	}
+	h3.title {
+		margin-bottom: 0px;
+		font-weight: 600;
+	}
+	img.img-line {
+		width: 10%;
+		height: 100%;
+		scale: 1;
+	}
+	div.email-line {
+		display: flex;
+		padding-top: 18px;
+	}
+	div.phone-line {
+		display: flex;
+	}
+	div.location-line {
+		display: flex;
+		padding-bottom: 20px
+	}
+    div.contact {
+        align-self: revert;
+    }
+@media (max-width:600px),(pointer:none) {
   
-  .columnr {
-    float: right;
-    width: 33%;
-    padding: 10px;
-    padding-left: 20px;
-    padding-top: 25px;
-  }
-  .row {
-      display: flex;
-  }
+  
+	.row {
+		all:revert;
+	}
+	.row:after {
+		all:revert;
+	}  
+  
+	h1.name-title {
+	font-weight: bold;
+	padding: 30px;
+	padding-bottom: 10px;
+	letter-spacing: 15px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
 
-  .row:after {
-    content: "";
-    display: table;
-    clear: both;
-  }
+h2.title {
+	font-weight: 600;
+	margin-bottom: auto;
+	padding: 25px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
 
-  .h1title {
-    font-weight: 600;
-    display: inline-block;
-    padding-bottom: 5px;
-    position: relative;
-  }
+h3.title {
+	margin-bottom: 0px;
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
 
-  .h1title:before{
-    content: "";
-    position: absolute;
-    float: left;
-    width: 70px;
-    height: 2px;
-    bottom: 0;
-    border-bottom: 3px solid rgb(191, 197, 193);
+.h1title {
+	font-weight: 600;
+	display: inline-block;
+	padding-bottom: 5px;
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.h1title:before {
+	content: "";
+	position: absolute;
+	float: left;
+	width: 70px;
+	height: 2px;
+	bottom: 0;
+	border-bottom: 3px solid rgb(191, 197, 193);
 }
 
 ul.no-bullets {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-  }
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
 
-  p.contact {
-    display: flex;
-    width: 180px;
-  }
-  
-  p.contact:before {
-    content: "@";
-    padding-right: 4px;
-  }
+p.contact {
+	display: flex;
+	width: 180px;
+}
 
-  #resume-shadow {
-    border: 1px solid rgb(194, 194, 194);
+p.contact:before {
+	content: "@";
+	padding-right: 4px;
+}
+
+.columnl {
+	padding: 20px;
+	width:revert;
+}
+
+.columnr {
+	width:revert;
+	display: flex;
+	flex-flow: column;
+	padding: 20px;
+	/* width: 33%;
+    padding: 10px;
+    padding-left: 20px;
+    padding-top: 25px;
+    display: inline-block; */
+}
+
+div.contact {
+	order: 3;
+}
+
+div.education {
+	order: 1;
+}
+
+div.skills {
+	order: 2;
+}
+
+h1.name-title {
+	font-weight: bold;
+	padding: 20px;
+	padding-bottom: 10px;
+}
+
+div.email-line {
+	padding-top: 40px;
+	display: flex;
+	align-items: center;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+div.phone-line {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+div.location-line {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+img.img-line {
+	scale: 0.5;
+}
+#resume-shadow {
+    /* border: 1px solid rgb(194, 194, 194); */
+    text-align: center;
     /* box-shadow: 20px 12px #b3b3b3; */
+}
+
+ul.ul-points{
+    text-align: left;
+}
+div.contact {
+    align-self: center;
+}
   }
