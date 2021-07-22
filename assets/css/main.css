@@ -208,16 +208,17 @@ main.page-content {
 		font-weight: 600;
 	}
 	img.img-line {
-		width: 10%;
+		width: 30px;
 		height: 100%;
-		scale: 1;
 	}
 	div.email-line {
 		display: flex;
 		padding-top: 18px;
+		padding-bottom: 8px;
 	}
 	div.phone-line {
 		display: flex;
+		padding-bottom: 8px;
 	}
 	div.location-line {
 		display: flex;
@@ -226,9 +227,18 @@ main.page-content {
     div.contact {
         align-self: revert;
     }
+	
+	p.phone-p {
+		padding-left:10px;
+		margin:inherit;
+	}
+	
 @media (max-width:600px),(pointer:none) {
   
-  
+	p.phone-p {
+		padding:10px;
+		margin:inherit;
+	}
 	.row {
 		all:revert;
 	}
@@ -260,6 +270,7 @@ h3.title {
 	text-overflow: ellipsis;
 }
 
+
 .h1title {
 	font-weight: 600;
 	display: inline-block;
@@ -277,9 +288,17 @@ h3.title {
 	width: 70px;
 	height: 2px;
 	bottom: 0;
-	border-bottom: 3px solid rgb(191, 197, 193);
+	border-bottom: 0px solid rgb(191, 197, 193);
 }
 
+.h1title:after {
+	content: "";
+    display: block;
+    margin: 0 auto; 
+    width: 140px;
+	bottom: 0;
+	border-bottom: 3px solid rgb(191, 197, 193);
+}
 ul.no-bullets {
 	list-style-type: none;
 	margin: 0;
@@ -306,11 +325,6 @@ p.contact:before {
 	display: flex;
 	flex-flow: column;
 	padding: 20px;
-	/* width: 33%;
-    padding: 10px;
-    padding-left: 20px;
-    padding-top: 25px;
-    display: inline-block; */
 }
 
 div.contact {
@@ -338,6 +352,7 @@ div.email-line {
 	width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	padding-bottom: 8px;
 }
 
 div.phone-line {
@@ -346,6 +361,7 @@ div.phone-line {
 	width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	padding-bottom: 8px;
 }
 
 div.location-line {
@@ -354,15 +370,15 @@ div.location-line {
 	width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	padding-bottom: 8px;
 }
 
 img.img-line {
-	scale: 0.5;
+	width: 30px;
+	height: 100%;
 }
 #resume-shadow {
-    /* border: 1px solid rgb(194, 194, 194); */
     text-align: center;
-    /* box-shadow: 20px 12px #b3b3b3; */
 }
 
 ul.ul-points{
