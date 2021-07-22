@@ -101,6 +101,16 @@ footer.site-footer {
     border-top: 1px solid #0b0e0d;
 }
 
+div.footer-col.footer-col-2 {
+	width: calc(30% - (30px / 2));
+	text-align: center;
+}
+
+div.footer-col.footer-col-3 {
+	width: calc(35% - (30px / 2));
+	text-align: right;
+}
+
 main.page-content {
     padding-top: 86px;
 }
@@ -236,7 +246,7 @@ main.page-content {
 		background-color: black;
 	}
 	
-@media (max-width:600px),(pointer:none) {
+@media (max-width:800px),(pointer:none) {
   
 	p.phone-p {
 		padding:10px;
@@ -390,4 +400,15 @@ ul.ul-points{
 div.contact {
     align-self: center;
 }
+
+div.footer-col.footer-col-2 {
+	width: revert;
+	text-align: revert;
+}
+
+div.footer-col.footer-col-3 {
+	width: revert;
+	text-align: revert;
+}
+
   }
