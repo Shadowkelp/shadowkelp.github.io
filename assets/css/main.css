@@ -206,7 +206,7 @@ footer.site-footer.h-card {
 		content: "@";
 		padding-right: 4px;
 	}
-	#resume-shadow {
+	#resume-wrapper {
 		border: 1px solid rgb(194, 194, 194);
         text-align: revert;
 		/* box-shadow: 20px 12px #b3b3b3; */
@@ -400,7 +400,7 @@ img.img-line {
 	width: 30px;
 	height: 100%;
 }
-#resume-shadow {
+#resume-wrapper {
     text-align: center;
 }
 
