@@ -2,12 +2,25 @@
 layout: default
 ---
 
+
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .svg-lastname { font: bold 4em sans-serif;  fill: rgb(237, 237, 237); text-shadow: 5px 5px 3px rgba(0, 0, 0, 0.466);text-anchor: middle;}
+    .svg-firstname { font: bold 5em sans-serif;  fill: rgb(238, 238, 238); text-shadow: 15px 15px 12px rgba(0, 0, 0, 0.466);text-anchor: middle;}
+    .svg-title {font: bold 0.9em sans-serif; fill:rgb(231, 230, 230); text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.521); text-anchor: middle;}
+  </style>
+  <text x="50%" y="50%" class="svg-lastname">Cramer</text>
+  <text x="50%" y="37%" class="svg-firstname">Joseph</text>
+  <text x="50%" y="65%" class="svg-title">Software Engineer</text>
+</svg>
 <div class="home">
   {%- if page.title -%}
     <h1 class="page-heading">{{ page.title }}</h1>
   {%- endif -%}
 
   {{ content }}
+
+
 
   {%- if site.posts.size > 0 -%}
     <h2 class="post-list-heading">{{ page.list_title | default: "Posts" }}</h2>
