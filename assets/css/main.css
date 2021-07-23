@@ -120,6 +120,16 @@ main.page-content {
     right: 30px;
 }
 
+.resume-wrapper {
+	animation: fadeIn;
+	animation-duration: 2s;
+}
+
+footer.site-footer.h-card {
+	transition: opacity 3s ease-in-out;
+     opacity: 1;
+}
+
 @media print
 {
     main.page-content {
