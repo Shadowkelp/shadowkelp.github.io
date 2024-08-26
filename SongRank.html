@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sufjan Song Rankings</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .song-button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #results, #progress, #save-load {
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Song Comparison with Save/Load</h1>
+    <div id="comparison">
+        <h2>Which song do you prefer?</h2>
+        <button id="song1" class="song-button"></button>
+        <button id="song2" class="song-button"></button>
+    </div>
+    <div id="progress"></div>
+    <div id="save-load">
+        <button id="save">Save Progress</button>
+        <button id="load">Load Progress</button>
+    </div>
+    <div id="results" class="hidden">
+        <h2>Final Rankings</h2>
+        <ol id="rankings"></ol>
+        <button id="restart">Start Over</button>
+    </div>
+
+    <script>
+        const songs = [
+            { album: "The Age of Adz", title: "Futile Devices" },
+            { album: "The Age of Adz", title: "Too Much" },
+            { album: "The Age of Adz", title: "Age of Adz" },
+            { album: "The Age of Adz", title: "I Walked" },
+            { album: "The Age of Adz", title: "Now That I'm Older" },
+            { album: "The Age of Adz", title: "Get Real Get Right" },
+            { album: "The Age of Adz", title: "Bad Communication" },
+            { album: "The Age of Adz", title: "Vesuvius" },
+            { album: "The Age of Adz", title: "All for Myself" },
+            { album: "The Age of Adz", title: "I Want to Be Well" },
+            { album: "The Age of Adz", title: "Impossible Soul" },
+            { album: "Carrie & Lowell", title: "Death with Dignity" },
+            { album: "Carrie & Lowell", title: "Should Have Known Better" },
+            { album: "Carrie & Lowell", title: "All of Me Wants All of You" },
+            { album: "Carrie & Lowell", title: "Drawn to the Blood" },
+            { album: "Carrie & Lowell", title: "Eugene" },
+            { album: "Carrie & Lowell", title: "Fourth of July" },
+            { album: "Carrie & Lowell", title: "The Only Thing" },
+            { album: "Carrie & Lowell", title: "Carrie & Lowell" },
+            { album: "Carrie & Lowell", title: "John My Beloved" },
+            { album: "Carrie & Lowell", title: "No Shade in the Shadow of the Cross" },
+            { album: "Carrie & Lowell", title: "Blue Bucket of Gold" },
+            { album: "Ascension", title: "Make Me an Offer I Cannot Refuse" },
+            { album: "Ascension", title: "Run Away With Me" },
+            { album: "Ascension", title: "Video Game" },
+            { album: "Ascension", title: "Lamentations" },
+            { album: "Ascension", title: "Tell Me You Love Me" },
+            { album: "Ascension", title: "Die Happy" },
+            { album: "Ascension", title: "Ativan" },
+            { album: "Ascension", title: "Ursa Major" },
+            { album: "Ascension", title: "Landslide" },
+            { album: "Ascension", title: "Gilgamesh" },
+            { album: "Ascension", title: "Death Star" },
+            { album: "Ascension", title: "Goodbye to All That" },
+            { album: "Ascension", title: "Sugar" },
+            { album: "Ascension", title: "The Ascension" },
+            { album: "Ascension", title: "America" }
+        ];
+
+        let songData = [];
+        let comparisons = 0;
+        const minComparisons = songs.length * 2;
+        const maxComparisons = songs.length * 5;
+        const convergenceThreshold = 10;
+        let lastTopSongs = [];
+
+        function initializeSongData() {
+            songData = songs.map(song => ({ 
+                ...song, 
+                elo: 1400, 
+                comparisons: 0, 
+                confidence: 0 
+            }));
+        }
+
+        function calculateElo(winner, loser) {
+            const k = 32 * (1 - winner.confidence);
+            const expectedScoreWinner = 1 / (1 + Math.pow(10, (loser.elo - winner.elo) / 400));
+            const expectedScoreLoser = 1 - expectedScoreWinner;
+
+            winner.elo += k * (1 - expectedScoreWinner);
+            loser.elo += k * (0 - expectedScoreLoser);
+
+            winner.comparisons++;
+            loser.comparisons++;
+
+            winner.confidence = Math.min(winner.confidence + 0.1, 0.9);
+            loser.confidence = Math.min(loser.confidence + 0.1, 0.9);
+        }
+
+        function selectSongsForComparison() {
+            const leastCompared = _.minBy(songData, 'comparisons');
+            if (leastCompared.comparisons < 5) {
+                return [leastCompared, _.sample(_.without(songData, leastCompared))];
+            }
+            return _.sampleSize(songData, 2);
+        }
+
+        function displayComparison() {
+            const [song1, song2] = selectSongsForComparison();
+            document.getElementById('song1').textContent = `${song1.title} (${song1.album})`;
+            document.getElementById('song2').textContent = `${song2.title} (${song2.album})`;
+
+            document.getElementById('song1').onclick = () => handleChoice(song1, song2);
+            document.getElementById('song2').onclick = () => handleChoice(song2, song1);
+
+            updateProgress();
+        }
+
+        function handleChoice(winner, loser) {
+            calculateElo(winner, loser);
+            comparisons++;
+
+            if (shouldStop()) {
+                displayResults();
+            } else {
+                displayComparison();
+            }
+        }
+
+        function shouldStop() {
+            if (comparisons < minComparisons) return false;
+            if (comparisons >= maxComparisons) return true;
+
+            const topSongs = _.orderBy(songData, ['elo'], ['desc']).slice(0, 10);
+            const topSongsStable = _.isEqual(
+                topSongs.map(s => s.title),
+                lastTopSongs.map(s => s.title)
+            );
+
+            lastTopSongs = topSongs;
+
+            return topSongsStable && comparisons >= minComparisons + convergenceThreshold;
+        }
+
+        function updateProgress() {
+            const progressEl = document.getElementById('progress');
+            const percentage = Math.min((comparisons / minComparisons) * 100, 100);
+            progressEl.textContent = `Progress: ${Math.round(percentage)}%`;
+        }
+
+        function displayResults() {
+            document.getElementById('comparison').classList.add('hidden');
+            document.getElementById('progress').classList.add('hidden');
+            document.getElementById('save-load').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+
+            const sortedSongs = _.orderBy(songData, ['elo'], ['desc']);
+            const rankings = document.getElementById('rankings');
+            rankings.innerHTML = sortedSongs.map(song => 
+                `<li>${song.title} (${song.album}) - Elo: ${Math.round(song.elo)}</li>`
+            ).join('');
+        }
+
+        function saveProgress() {
+            const saveData = {
+                songData: songData,
+                comparisons: comparisons,
+                lastTopSongs: lastTopSongs
+            };
+            localStorage.setItem('songComparisonProgress', JSON.stringify(saveData));
+            alert('Progress saved successfully!');
+        }
+
+        function loadProgress() {
+            const savedData = localStorage.getItem('songComparisonProgress');
+            if (savedData) {
+                const parseData = JSON.parse(savedData);
+                songData = parseData.songData;
+                comparisons = parseData.comparisons;
+                lastTopSongs = parseData.lastTopSongs;
+                alert('Progress loaded successfully!');
+                displayComparison();
+            } else {
+                alert('No saved progress found.');
+            }
+        }
+
+        document.getElementById('restart').onclick = () => {
+            initializeSongData();
+            comparisons = 0;
+            lastTopSongs = [];
+            document.getElementById('comparison').classList.remove('hidden');
+            document.getElementById('progress').classList.remove('hidden');
+            document.getElementById('save-load').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            displayComparison();
+        };
+
+        document.getElementById('save').onclick = saveProgress;
+        document.getElementById('load').onclick = loadProgress;
+
+        initializeSongData();
+        displayComparison();
+    </script>
+</body>
+</html>
