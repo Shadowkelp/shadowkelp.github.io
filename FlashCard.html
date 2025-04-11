@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for the flip animation and card */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Prevent text selection during rapid clicks */
+            user-select: none;
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE/Edge */
+        }
+
+        .card-container {
+            perspective: 1000px; /* Provides depth for the 3D effect */
+            min-height: 200px; /* Ensure container has height even when card is empty */
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d; /* Allows children to be positioned in 3D space */
+            transition: transform 0.6s; /* Animation duration */
+            cursor: pointer;
+            border-radius: 0.5rem; /* Equivalent to rounded-lg */
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg); /* Flip the card */
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden; /* Hides the back side of the element when facing away */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
+            text-align: center;
+            font-size: 1.125rem; /* text-lg */
+            line-height: 1.75rem;
+            overflow-wrap: break-word; /* Break long words */
+            word-wrap: break-word; /* Legacy */
+            hyphens: auto; /* Add hyphens if needed */
+        }
+
+        .card-front {
+            background-color: white; /* bg-white */
+            color: #1f2937; /* text-gray-800 */
+            border: 1px solid #e5e7eb; /* border border-gray-200 */
+        }
+
+        .card-back {
+            background-color: #f3f4f6; /* bg-gray-100 */
+            color: #1f2937; /* text-gray-800 */
+            border: 1px solid #e5e7eb; /* border border-gray-200 */
+            transform: rotateY(180deg); /* Position the back face initially flipped */
+        }
+
+        /* Basic styling for the message box */
+        #message-box {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+            opacity: 0;
+            visibility: hidden;
+        }
+        #message-box.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Style disabled buttons */
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Custom file input button */
+        input[type="file"] {
+            display: none; /* Hide the default input */
+        }
+        .custom-file-upload {
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            display: inline-block;
+            padding: 0.5rem 1rem; /* py-2 px-4 */
+            cursor: pointer;
+            background-color: white; /* bg-white */
+            color: #374151; /* text-gray-700 */
+            border-radius: 0.375rem; /* rounded-md */
+            transition: background-color 0.2s;
+        }
+        .custom-file-upload:hover {
+            background-color: #f9fafb; /* bg-gray-50 */
+        }
+
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Flashcard App</h1>
+
+        <div class="mb-4 text-center">
+            <label for="fileInput" class="custom-file-upload hover:bg-gray-100">
+                Load Cards from File
+            </label>
+            <input type="file" id="fileInput" accept=".txt,.csv">
+            <p class="text-xs text-gray-500 mt-1">Use .txt or .csv file. Format: Front Text,Back Text (one per line)</p>
+            <p id="fileName" class="text-sm text-gray-600 mt-1"></p>
+        </div>
+
+        <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
+             <button id="shuffleButton" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">Shuffle</button>
+             <div id="deckInfo" class="text-sm text-gray-700">
+                <span id="currentDeckName">Main Deck</span>: <span id="cardCount">0</span> cards left
+             </div>
+        </div>
+
+        <div class="card-container mb-6 h-48 sm:h-56 md:h-64" id="cardContainer">
+            <div class="card" id="card">
+                <div class="card-face card-front" id="cardFront">Load a file to start!</div>
+                <div class="card-face card-back" id="cardBack"></div>
+            </div>
+        </div>
+
+        <div class="flex justify-around mb-6 gap-4">
+            <button id="didntGetItButton" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-md transition duration-200 w-1/2 disabled:opacity-50 disabled:cursor-not-allowed">Didn't Get It</button>
+            <button id="gotItButton" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-md transition duration-200 w-1/2 disabled:opacity-50 disabled:cursor-not-allowed">Got It!</button>
+        </div>
+
+         <div class="flex justify-center gap-4 flex-wrap">
+             <button id="viewGotItPile" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded-md text-sm transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">View 'Got It' (<span id="gotItCount">0</span>)</button>
+             <button id="viewDidntGetItPile" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded-md text-sm transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">View 'Didn't Get It' (<span id="didntGetItCount">0</span>)</button>
+             <button id="viewMainDeck" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded-md text-sm transition duration-200 hidden">Back to Main Deck</button>
+        </div>
+    </div>
+
+    <div id="message-box" class="bg-gray-800 text-white text-sm py-2 px-4 rounded-md shadow-md">
+        <span id="message-text"></span>
+    </div>
+
+    <script>
+        // DOM Elements
+        const fileInput = document.getElementById('fileInput');
+        const fileNameDisplay = document.getElementById('fileName');
+        const card = document.getElementById('card');
+        const cardContainer = document.getElementById('cardContainer');
+        const cardFront = document.getElementById('cardFront');
+        const cardBack = document.getElementById('cardBack');
+        const shuffleButton = document.getElementById('shuffleButton');
+        const cardCountDisplay = document.getElementById('cardCount');
+        const currentDeckNameDisplay = document.getElementById('currentDeckName');
+        const gotItButton = document.getElementById('gotItButton');
+        const didntGetItButton = document.getElementById('didntGetItButton');
+        const viewGotItPileButton = document.getElementById('viewGotItPile');
+        const viewDidntGetItPileButton = document.getElementById('viewDidntGetItPile');
+        const viewMainDeckButton = document.getElementById('viewMainDeck');
+        const gotItCountDisplay = document.getElementById('gotItCount');
+        const didntGetItCountDisplay = document.getElementById('didntGetItCount');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+
+        // App State
+        let mainDeck = []; // Array to hold all cards { front: '...', back: '...' }
+        let gotItPile = [];
+        let didntGetItPile = [];
+        let currentDeck = []; // The deck currently being viewed (main, gotIt, or didntGetIt)
+        let currentCardIndex = 0;
+        let isFlipped = false;
+        let currentDeckName = 'Main Deck'; // To track which deck is active
+
+        // --- Initialization ---
+        updateUI(); // Initial UI setup
+
+        // --- Event Listeners ---
+
+        // File Input
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Card Click (Flip)
+        card.addEventListener('click', () => {
+            if (currentDeck.length > 0) { // Only allow flip if there's a card
+                 isFlipped = !isFlipped;
+                 card.classList.toggle('is-flipped', isFlipped);
+            }
+        });
+
+        // Shuffle Button
+        shuffleButton.addEventListener('click', () => {
+            if (currentDeck.length > 0) {
+                shuffleDeck(currentDeck);
+                currentCardIndex = 0;
+                isFlipped = false; // Reset flip state
+                displayCurrentCard();
+                showMessage('Deck shuffled!');
+            }
+        });
+
+        // "Got It" Button
+        gotItButton.addEventListener('click', () => {
+            if (currentCardIndex < currentDeck.length) {
+                const cardToMove = currentDeck[currentCardIndex];
+                // Only move from main deck to piles
+                if (currentDeckName === 'Main Deck') {
+                    gotItPile.push(cardToMove);
+                }
+                moveToNextCard();
+            }
+        });
+
+        // "Didn't Get It" Button
+        didntGetItButton.addEventListener('click', () => {
+            if (currentCardIndex < currentDeck.length) {
+                 const cardToMove = currentDeck[currentCardIndex];
+                 // Only move from main deck to piles
+                 if (currentDeckName === 'Main Deck') {
+                    didntGetItPile.push(cardToMove);
+                 }
+                moveToNextCard();
+            }
+        });
+
+         // View Pile Buttons
+        viewGotItPileButton.addEventListener('click', () => loadDeck(gotItPile, "'Got It' Pile"));
+        viewDidntGetItPileButton.addEventListener('click', () => loadDeck(didntGetItPile, "'Didn't Get It' Pile"));
+        viewMainDeckButton.addEventListener('click', () => loadDeck(mainDeck, 'Main Deck'));
+
+
+        // --- Functions ---
+
+        /**
+         * Handles the file selection and processing.
+         * @param {Event} event - The file input change event.
+         */
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return; // No file selected
+            }
+
+            fileNameDisplay.textContent = `Loaded: ${file.name}`;
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                const text = e.target.result;
+                parseFileContent(text);
+                // Reset piles when a new file is loaded
+                gotItPile = [];
+                didntGetItPile = [];
+                loadDeck(mainDeck, 'Main Deck'); // Load the new main deck
+                showMessage(`Loaded ${mainDeck.length} cards.`);
+            };
+
+            reader.onerror = () => {
+                 showMessage('Error reading file.', 'error');
+                 fileNameDisplay.textContent = ''; // Clear file name on error
+            };
+
+            reader.readAsText(file);
+        }
+
+        /**
+         * Parses the text content from the file into flashcards.
+         * Assumes format: Front Text,Back Text (or tab-separated) per line.
+         * @param {string} text - The content of the file.
+         */
+        function parseFileContent(text) {
+            mainDeck = []; // Clear previous main deck
+            const lines = text.split('\n');
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return; // Skip empty lines
+
+                let parts = line.split(','); // Try comma first
+                if (parts.length < 2) {
+                    parts = line.split('\t'); // Try tab if comma fails
+                }
+
+                if (parts.length >= 2) {
+                    const front = parts[0].trim();
+                    const back = parts.slice(1).join(parts.length > 2 ? (line.includes('\t') ? '\t' : ',') : '').trim(); // Join remaining parts for back
+                    if (front && back) { // Ensure both front and back have content
+                         mainDeck.push({ front, back });
+                    }
+                } else {
+                    console.warn(`Skipping invalid line: ${line}`); // Log invalid lines
+                }
+            });
+        }
+
+        /**
+         * Loads a specific deck (main, gotIt, didntGetIt) into the view.
+         * @param {Array} deck - The array of card objects to load.
+         * @param {string} name - The name of the deck being loaded.
+         */
+        function loadDeck(deck, name) {
+            currentDeck = [...deck]; // Use a copy so shuffling doesn't affect original piles directly
+            currentDeckName = name;
+            currentCardIndex = 0;
+            isFlipped = false;
+            displayCurrentCard();
+            updateUI();
+
+            // Show/hide the "Back to Main Deck" button
+            viewMainDeckButton.classList.toggle('hidden', name === 'Main Deck');
+            // Disable pile view buttons if that pile is active
+            viewGotItPileButton.disabled = name === "'Got It' Pile";
+            viewDidntGetItPileButton.disabled = name === "'Didn't Get It' Pile";
+
+            // Disable sorting buttons if not viewing main deck
+            gotItButton.disabled = name !== 'Main Deck' || currentDeck.length === 0;
+            didntGetItButton.disabled = name !== 'Main Deck' || currentDeck.length === 0;
+        }
+
+
+        /**
+         * Displays the current card based on the currentCardIndex.
+         */
+        function displayCurrentCard() {
+            card.classList.remove('is-flipped'); // Ensure card starts unflipped
+            isFlipped = false;
+
+            if (currentCardIndex < currentDeck.length) {
+                const cardData = currentDeck[currentCardIndex];
+                cardFront.textContent = cardData.front;
+                cardBack.textContent = cardData.back;
+                cardContainer.classList.remove('opacity-50'); // Make card visible
+            } else {
+                // Handle end of deck
+                cardFront.textContent = `End of ${currentDeckName}.`;
+                cardBack.textContent = '';
+                 // Optionally keep the card slightly visible but indicate it's done
+                cardContainer.classList.add('opacity-50');
+            }
+             updateUI(); // Update counts and button states
+        }
+
+        /**
+         * Moves to the next card in the current deck.
+         */
+        function moveToNextCard() {
+            if (currentCardIndex < currentDeck.length) {
+                currentCardIndex++;
+                displayCurrentCard();
+            }
+             // No need for an 'else' here, displayCurrentCard handles the end state
+        }
+
+        /**
+         * Shuffles the deck using the Fisher-Yates algorithm.
+         * @param {Array} deck - The deck (array of cards) to shuffle.
+         */
+        function shuffleDeck(deck) {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]]; // Swap elements
+            }
+        }
+
+        /**
+         * Updates the UI elements like card count and button states.
+         */
+        function updateUI() {
+            const remainingCards = currentDeck.length - currentCardIndex;
+            cardCountDisplay.textContent = remainingCards > 0 ? remainingCards : 0;
+            currentDeckNameDisplay.textContent = currentDeckName;
+
+            // Update pile counts
+            gotItCountDisplay.textContent = gotItPile.length;
+            didntGetItCountDisplay.textContent = didntGetItPile.length;
+
+            // Enable/disable buttons based on state
+            const hasCardsInCurrentDeck = currentDeck.length > 0;
+            const cardsRemainingInView = currentCardIndex < currentDeck.length;
+
+            shuffleButton.disabled = !hasCardsInCurrentDeck;
+            // Sorting buttons only active for Main Deck and if cards remain
+            gotItButton.disabled = currentDeckName !== 'Main Deck' || !cardsRemainingInView;
+            didntGetItButton.disabled = currentDeckName !== 'Main Deck' || !cardsRemainingInView;
+
+            // Pile view buttons disabled if empty or currently viewed
+            viewGotItPileButton.disabled = gotItPile.length === 0 || currentDeckName === "'Got It' Pile";
+            viewDidntGetItPileButton.disabled = didntGetItPile.length === 0 || currentDeckName === "'Didn't Get It' Pile";
+
+             // Disable card flip if no cards are loaded or deck finished
+             card.style.cursor = cardsRemainingInView ? 'pointer' : 'default';
+
+        }
+
+         /**
+         * Shows a temporary message to the user.
+         * @param {string} message - The text to display.
+         * @param {string} type - 'info' (default) or 'error'.
+         */
+        function showMessage(message, type = 'info') {
+            messageText.textContent = message;
+            // Basic styling differentiation (optional)
+            messageBox.classList.toggle('bg-red-600', type === 'error');
+            messageBox.classList.toggle('bg-gray-800', type !== 'error');
+
+            messageBox.classList.add('show');
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000); // Hide after 3 seconds
+        }
+
+    </script>
+
+</body>
+</html>
