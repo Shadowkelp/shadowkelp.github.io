@@ -1,424 +1,946 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flashcard App</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* Custom styles for the flip animation and card */
-        body {
-            font-family: 'Inter', sans-serif;
-            /* Prevent text selection during rapid clicks */
-            user-select: none;
-            -webkit-user-select: none; /* Safari */
-            -moz-user-select: none; /* Firefox */
-            -ms-user-select: none; /* IE/Edge */
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Flashcard App</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <style>
+            /* Custom styles for the flip animation and card */
+            body {
+                font-family: "Inter", sans-serif;
+                /* Prevent text selection during rapid clicks */
+                user-select: none;
+                -webkit-user-select: none; /* Safari */
+                -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* IE/Edge */
+            }
 
-        .card-container {
-            perspective: 1000px; /* Provides depth for the 3D effect */
-            min-height: 200px; /* Ensure container has height even when card is empty */
-        }
+            .card-container {
+                perspective: 1000px; /* Provides depth for the 3D effect */
+                min-height: 200px; /* Ensure container has height even when card is empty */
+            }
 
-        .card {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transform-style: preserve-3d; /* Allows children to be positioned in 3D space */
-            transition: transform 0.6s; /* Animation duration */
-            cursor: pointer;
-            border-radius: 0.5rem; /* Equivalent to rounded-lg */
-        }
+            .card {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                transform-style: preserve-3d; /* Allows children to be positioned in 3D space */
+                transition: transform 0.6s; /* Animation duration */
+                cursor: pointer;
+                border-radius: 0.5rem; /* Equivalent to rounded-lg */
+            }
 
-        .card.is-flipped {
-            transform: rotateY(180deg); /* Flip the card */
-        }
+            .card.is-flipped {
+                transform: rotateY(180deg); /* Flip the card */
+            }
 
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden; /* Hides the back side of the element when facing away */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 1.5rem; /* p-6 */
-            border-radius: 0.5rem; /* rounded-lg */
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
-            text-align: center;
-            font-size: 1.125rem; /* text-lg */
-            line-height: 1.75rem;
-            overflow-wrap: break-word; /* Break long words */
-            word-wrap: break-word; /* Legacy */
-            hyphens: auto; /* Add hyphens if needed */
-        }
+            .card-face {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                backface-visibility: hidden; /* Hides the back side of the element when facing away */
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                align-items: center;
+                padding: 1.5rem; /* p-6 */
+                border-radius: 0.5rem; /* rounded-lg */
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
+                text-align: center;
+                font-size: 1.125rem; /* text-lg */
+                line-height: 1.75rem;
+                overflow-wrap: break-word; /* Break long words */
+                word-wrap: break-word; /* Legacy */
+                hyphens: auto; /* Add hyphens if needed */
+                overflow-y: auto; /* Add scrolling for content that exceeds height */
+            }
 
-        .card-front {
-            background-color: white; /* bg-white */
-            color: #1f2937; /* text-gray-800 */
-            border: 1px solid #e5e7eb; /* border border-gray-200 */
-        }
+            .card-front {
+                background-color: white; /* bg-white */
+                color: #1f2937; /* text-gray-800 */
+                border: 1px solid #e5e7eb; /* border border-gray-200 */
+            }
 
-        .card-back {
-            background-color: #f3f4f6; /* bg-gray-100 */
-            color: #1f2937; /* text-gray-800 */
-            border: 1px solid #e5e7eb; /* border border-gray-200 */
-            transform: rotateY(180deg); /* Position the back face initially flipped */
-        }
+            .card-back {
+                background-color: #f3f4f6; /* bg-gray-100 */
+                color: #1f2937; /* text-gray-800 */
+                border: 1px solid #e5e7eb; /* border border-gray-200 */
+                transform: rotateY(180deg); /* Position the back face initially flipped */
+            }
 
-        /* Basic styling for the message box */
-        #message-box {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
-            opacity: 0;
-            visibility: hidden;
-        }
-        #message-box.show {
-            opacity: 1;
-            visibility: visible;
-        }
+            /* Basic styling for the message box */
+            #message-box {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+                opacity: 0;
+                visibility: hidden;
+            }
+            #message-box.show {
+                opacity: 1;
+                visibility: visible;
+            }
 
-        /* Style disabled buttons */
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+            /* Style disabled buttons */
+            button:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
 
-        /* Custom file input button */
-        input[type="file"] {
-            display: none; /* Hide the default input */
-        }
-        .custom-file-upload {
-            border: 1px solid #d1d5db; /* border-gray-300 */
-            display: inline-block;
-            padding: 0.5rem 1rem; /* py-2 px-4 */
-            cursor: pointer;
-            background-color: white; /* bg-white */
-            color: #374151; /* text-gray-700 */
-            border-radius: 0.375rem; /* rounded-md */
-            transition: background-color 0.2s;
-        }
-        .custom-file-upload:hover {
-            background-color: #f9fafb; /* bg-gray-50 */
-        }
+            /* Custom file input button */
+            input[type="file"] {
+                display: none; /* Hide the default input */
+            }
+            .custom-file-upload {
+                border: 1px solid #d1d5db; /* border-gray-300 */
+                display: inline-block;
+                padding: 0.5rem 1rem; /* py-2 px-4 */
+                cursor: pointer;
+                background-color: white; /* bg-white */
+                color: #374151; /* text-gray-700 */
+                border-radius: 0.375rem; /* rounded-md */
+                transition: background-color 0.2s;
+            }
+            .custom-file-upload:hover {
+                background-color: #f9fafb; /* bg-gray-50 */
+            }
 
-    </style>
-</head>
-<body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-4">
+            /* Style for multiple choice options */
+            .choice-list {
+                text-align: left;
+                width: 100%;
+                margin-top: 1rem;
+            }
 
-    <div class="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Flashcard App</h1>
+            .choice-item {
+                margin-bottom: 0.75rem;
+                padding-left: 0.5rem;
+                display: flex;
+                align-items: flex-start;
+            }
 
-        <div class="mb-4 text-center">
-            <label for="fileInput" class="custom-file-upload hover:bg-gray-100">
-                Load Cards from File
-            </label>
-            <input type="file" id="fileInput" accept=".txt,.csv">
-            <p class="text-xs text-gray-500 mt-1">Use .txt or .csv file. Format: Front Text,Back Text (one per line)</p>
-            <p id="fileName" class="text-sm text-gray-600 mt-1"></p>
-        </div>
+            .choice-item input {
+                margin-right: 0.5rem;
+                margin-top: 0.25rem;
+            }
 
-        <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
-             <button id="shuffleButton" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">Shuffle</button>
-             <div id="deckInfo" class="text-sm text-gray-700">
-                <span id="currentDeckName">Main Deck</span>: <span id="cardCount">0</span> cards left
-             </div>
-        </div>
+            .choice-label {
+                flex: 1;
+            }
 
-        <div class="card-container mb-6 h-48 sm:h-56 md:h-64" id="cardContainer">
-            <div class="card" id="card">
-                <div class="card-face card-front" id="cardFront">Load a file to start!</div>
-                <div class="card-face card-back" id="cardBack"></div>
+            /* For text alignment in cards */
+            .text-content {
+                width: 100%;
+                white-space: pre-line; /* Preserves line breaks in content */
+            }
+
+            /* Quiz mode styles */
+            .quiz-actions {
+                width: 100%;
+                margin-top: 1rem;
+                display: flex;
+                justify-content: center;
+            }
+
+            .submit-button {
+                background-color: #4f46e5; /* indigo-600 */
+                color: white;
+                font-weight: 600;
+                padding: 0.5rem 1.5rem;
+                border-radius: 0.375rem;
+                transition: background-color 0.2s;
+            }
+
+            .submit-button:hover {
+                background-color: #4338ca; /* indigo-700 */
+            }
+
+            .submit-button:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .feedback-correct {
+                color: #16a34a; /* green-600 */
+                font-weight: 600;
+                margin-top: 0.5rem;
+            }
+
+            .feedback-incorrect {
+                color: #dc2626; /* red-600 */
+                font-weight: 600;
+                margin-top: 0.5rem;
+            }
+        </style>
+    </head>
+    <body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-4">
+        <div class="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
+            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Flashcard App</h1>
+
+            <div class="mb-4 text-center">
+                <label for="fileInput" class="custom-file-upload hover:bg-gray-100">
+                    Load Cards from File
+                </label>
+                <input type="file" id="fileInput" accept=".txt,.csv" />
+                <p class="text-xs text-gray-500 mt-1">Use .txt or .csv file. Format: Front Text,Back Text (one per line)</p>
+                <p id="fileName" class="text-sm text-gray-600 mt-1"></p>
+            </div>
+
+            <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
+                <button id="shuffleButton" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">Shuffle</button>
+                <div id="deckInfo" class="text-sm text-gray-700"><span id="currentDeckName">Main Deck</span>: <span id="cardCount">0</span> cards left</div>
+            </div>
+
+            <div class="flex justify-between items-center mb-4 gap-2">
+                <div class="flex items-center">
+                    <input type="checkbox" id="quizModeToggle" class="mr-2" />
+                    <label for="quizModeToggle" class="text-sm text-gray-700">Quiz Mode</label>
+                </div>
+                <div id="quizScore" class="text-sm text-gray-700 hidden">Score: <span id="correctAnswers">0</span>/<span id="totalAttempts">0</span></div>
+            </div>
+
+            <div class="card-container mb-6 h-64 sm:h-80 md:h-96" id="cardContainer">
+                <div class="card" id="card">
+                    <div class="card-face card-front" id="cardFront">Load a file to start!</div>
+                    <div class="card-face card-back" id="cardBack"></div>
+                </div>
+            </div>
+
+            <div id="quizSubmitContainer" class="mb-4 text-center hidden">
+                <button id="submitAnswerButton" class="submit-button">Submit Answer</button>
+                <div id="feedback-container" class="mt-2"></div>
+            </div>
+
+            <div class="flex justify-around mb-6 gap-4">
+                <button id="didntGetItButton" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-md transition duration-200 w-1/2 disabled:opacity-50 disabled:cursor-not-allowed">Didn't Get It</button>
+                <button id="gotItButton" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-md transition duration-200 w-1/2 disabled:opacity-50 disabled:cursor-not-allowed">Got It!</button>
+            </div>
+
+            <div class="flex justify-center gap-4 flex-wrap">
+                <button id="viewGotItPile" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded-md text-sm transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    View 'Got It' (<span id="gotItCount">0</span>)
+                </button>
+                <button id="viewDidntGetItPile" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded-md text-sm transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    View 'Didn't Get It' (<span id="didntGetItCount">0</span>)
+                </button>
+                <button id="viewMainDeck" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded-md text-sm transition duration-200 hidden">Back to Main Deck</button>
             </div>
         </div>
 
-        <div class="flex justify-around mb-6 gap-4">
-            <button id="didntGetItButton" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-md transition duration-200 w-1/2 disabled:opacity-50 disabled:cursor-not-allowed">Didn't Get It</button>
-            <button id="gotItButton" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-md transition duration-200 w-1/2 disabled:opacity-50 disabled:cursor-not-allowed">Got It!</button>
+        <div id="message-box" class="bg-gray-800 text-white text-sm py-2 px-4 rounded-md shadow-md">
+            <span id="message-text"></span>
         </div>
 
-         <div class="flex justify-center gap-4 flex-wrap">
-             <button id="viewGotItPile" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded-md text-sm transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">View 'Got It' (<span id="gotItCount">0</span>)</button>
-             <button id="viewDidntGetItPile" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded-md text-sm transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">View 'Didn't Get It' (<span id="didntGetItCount">0</span>)</button>
-             <button id="viewMainDeck" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded-md text-sm transition duration-200 hidden">Back to Main Deck</button>
-        </div>
-    </div>
+        <script>
+            // DOM Elements
+            const fileInput = document.getElementById("fileInput");
+            const fileNameDisplay = document.getElementById("fileName");
+            const card = document.getElementById("card");
+            const cardContainer = document.getElementById("cardContainer");
+            const cardFront = document.getElementById("cardFront");
+            const cardBack = document.getElementById("cardBack");
+            const shuffleButton = document.getElementById("shuffleButton");
+            const cardCountDisplay = document.getElementById("cardCount");
+            const currentDeckNameDisplay = document.getElementById("currentDeckName");
+            const gotItButton = document.getElementById("gotItButton");
+            const didntGetItButton = document.getElementById("didntGetItButton");
+            const viewGotItPileButton = document.getElementById("viewGotItPile");
+            const viewDidntGetItPileButton = document.getElementById("viewDidntGetItPile");
+            const viewMainDeckButton = document.getElementById("viewMainDeck");
+            const gotItCountDisplay = document.getElementById("gotItCount");
+            const didntGetItCountDisplay = document.getElementById("didntGetItCount");
+            const messageBox = document.getElementById("message-box");
+            const messageText = document.getElementById("message-text");
+            const quizModeToggle = document.getElementById("quizModeToggle");
+            const quizScoreDisplay = document.getElementById("quizScore");
+            const correctAnswersDisplay = document.getElementById("correctAnswers");
+            const totalAttemptsDisplay = document.getElementById("totalAttempts");
+            const submitAnswerButton = document.getElementById("submitAnswerButton");
+            const quizSubmitContainer = document.getElementById("quizSubmitContainer");
+            const feedbackContainer = document.getElementById("feedback-container");
 
-    <div id="message-box" class="bg-gray-800 text-white text-sm py-2 px-4 rounded-md shadow-md">
-        <span id="message-text"></span>
-    </div>
+            // App State
+            let mainDeck = []; // Array to hold all cards { front: '...', back: '...', isMultipleChoice: false, choices: [] }
+            let gotItPile = [];
+            let didntGetItPile = [];
+            let currentDeck = []; // The deck currently being viewed (main, gotIt, or didntGetIt)
+            let currentCardIndex = 0;
+            let isFlipped = false;
+            let currentDeckName = "Main Deck"; // To track which deck is active
+            let quizMode = false; // Whether the app is in quiz mode
+            let correctAnswers = 0; // Number of correct answers in quiz mode
+            let totalAttempts = 0; // Total number of attempts in quiz mode
 
-    <script>
-        // DOM Elements
-        const fileInput = document.getElementById('fileInput');
-        const fileNameDisplay = document.getElementById('fileName');
-        const card = document.getElementById('card');
-        const cardContainer = document.getElementById('cardContainer');
-        const cardFront = document.getElementById('cardFront');
-        const cardBack = document.getElementById('cardBack');
-        const shuffleButton = document.getElementById('shuffleButton');
-        const cardCountDisplay = document.getElementById('cardCount');
-        const currentDeckNameDisplay = document.getElementById('currentDeckName');
-        const gotItButton = document.getElementById('gotItButton');
-        const didntGetItButton = document.getElementById('didntGetItButton');
-        const viewGotItPileButton = document.getElementById('viewGotItPile');
-        const viewDidntGetItPileButton = document.getElementById('viewDidntGetItPile');
-        const viewMainDeckButton = document.getElementById('viewMainDeck');
-        const gotItCountDisplay = document.getElementById('gotItCount');
-        const didntGetItCountDisplay = document.getElementById('didntGetItCount');
-        const messageBox = document.getElementById('message-box');
-        const messageText = document.getElementById('message-text');
+            // --- Initialization ---
+            updateUI(); // Initial UI setup
 
-        // App State
-        let mainDeck = []; // Array to hold all cards { front: '...', back: '...' }
-        let gotItPile = [];
-        let didntGetItPile = [];
-        let currentDeck = []; // The deck currently being viewed (main, gotIt, or didntGetIt)
-        let currentCardIndex = 0;
-        let isFlipped = false;
-        let currentDeckName = 'Main Deck'; // To track which deck is active
+            // --- Event Listeners ---
 
-        // --- Initialization ---
-        updateUI(); // Initial UI setup
+            // File Input
+            fileInput.addEventListener("change", handleFileSelect);
 
-        // --- Event Listeners ---
-
-        // File Input
-        fileInput.addEventListener('change', handleFileSelect);
-
-        // Card Click (Flip)
-        card.addEventListener('click', () => {
-            if (currentDeck.length > 0) { // Only allow flip if there's a card
-                 isFlipped = !isFlipped;
-                 card.classList.toggle('is-flipped', isFlipped);
-            }
-        });
-
-        // Shuffle Button
-        shuffleButton.addEventListener('click', () => {
-            if (currentDeck.length > 0) {
-                shuffleDeck(currentDeck);
-                currentCardIndex = 0;
-                isFlipped = false; // Reset flip state
-                displayCurrentCard();
-                showMessage('Deck shuffled!');
-            }
-        });
-
-        // "Got It" Button
-        gotItButton.addEventListener('click', () => {
-            if (currentCardIndex < currentDeck.length) {
-                const cardToMove = currentDeck[currentCardIndex];
-                // Only move from main deck to piles
-                if (currentDeckName === 'Main Deck') {
-                    gotItPile.push(cardToMove);
-                }
-                moveToNextCard();
-            }
-        });
-
-        // "Didn't Get It" Button
-        didntGetItButton.addEventListener('click', () => {
-            if (currentCardIndex < currentDeck.length) {
-                 const cardToMove = currentDeck[currentCardIndex];
-                 // Only move from main deck to piles
-                 if (currentDeckName === 'Main Deck') {
-                    didntGetItPile.push(cardToMove);
-                 }
-                moveToNextCard();
-            }
-        });
-
-         // View Pile Buttons
-        viewGotItPileButton.addEventListener('click', () => loadDeck(gotItPile, "'Got It' Pile"));
-        viewDidntGetItPileButton.addEventListener('click', () => loadDeck(didntGetItPile, "'Didn't Get It' Pile"));
-        viewMainDeckButton.addEventListener('click', () => loadDeck(mainDeck, 'Main Deck'));
-
-
-        // --- Functions ---
-
-        /**
-         * Handles the file selection and processing.
-         * @param {Event} event - The file input change event.
-         */
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) {
-                return; // No file selected
-            }
-
-            fileNameDisplay.textContent = `Loaded: ${file.name}`;
-            const reader = new FileReader();
-
-            reader.onload = (e) => {
-                const text = e.target.result;
-                parseFileContent(text);
-                // Reset piles when a new file is loaded
-                gotItPile = [];
-                didntGetItPile = [];
-                loadDeck(mainDeck, 'Main Deck'); // Load the new main deck
-                showMessage(`Loaded ${mainDeck.length} cards.`);
-            };
-
-            reader.onerror = () => {
-                 showMessage('Error reading file.', 'error');
-                 fileNameDisplay.textContent = ''; // Clear file name on error
-            };
-
-            reader.readAsText(file);
-        }
-
-        /**
-         * Parses the text content from the file into flashcards.
-         * Assumes format: Front Text,Back Text (or tab-separated) per line.
-         * @param {string} text - The content of the file.
-         */
-        function parseFileContent(text) {
-            mainDeck = []; // Clear previous main deck
-            const lines = text.split('\n');
-            lines.forEach(line => {
-                line = line.trim();
-                if (!line) return; // Skip empty lines
-
-                let parts = line.split(','); // Try comma first
-                if (parts.length < 2) {
-                    parts = line.split('\t'); // Try tab if comma fails
-                }
-
-                if (parts.length >= 2) {
-                    const front = parts[0].trim();
-                    const back = parts.slice(1).join(parts.length > 2 ? (line.includes('\t') ? '\t' : ',') : '').trim(); // Join remaining parts for back
-                    if (front && back) { // Ensure both front and back have content
-                         mainDeck.push({ front, back });
-                    }
-                } else {
-                    console.warn(`Skipping invalid line: ${line}`); // Log invalid lines
+            // Card Click (Flip) - Only active when not in quiz mode
+            card.addEventListener("click", () => {
+                if (currentDeck.length > 0 && !quizMode) {
+                    // Only allow flip if there's a card and not in quiz mode
+                    isFlipped = !isFlipped;
+                    card.classList.toggle("is-flipped", isFlipped);
                 }
             });
-        }
 
-        /**
-         * Loads a specific deck (main, gotIt, didntGetIt) into the view.
-         * @param {Array} deck - The array of card objects to load.
-         * @param {string} name - The name of the deck being loaded.
-         */
-        function loadDeck(deck, name) {
-            currentDeck = [...deck]; // Use a copy so shuffling doesn't affect original piles directly
-            currentDeckName = name;
-            currentCardIndex = 0;
-            isFlipped = false;
-            displayCurrentCard();
-            updateUI();
+            // Shuffle Button
+            shuffleButton.addEventListener("click", () => {
+                if (currentDeck.length > 0) {
+                    shuffleDeck(currentDeck);
+                    currentCardIndex = 0;
+                    isFlipped = false; // Reset flip state
+                    displayCurrentCard();
+                    showMessage("Deck shuffled!");
+                }
+            });
 
-            // Show/hide the "Back to Main Deck" button
-            viewMainDeckButton.classList.toggle('hidden', name === 'Main Deck');
-            // Disable pile view buttons if that pile is active
-            viewGotItPileButton.disabled = name === "'Got It' Pile";
-            viewDidntGetItPileButton.disabled = name === "'Didn't Get It' Pile";
+            // Quiz Mode Toggle
+            quizModeToggle.addEventListener("change", () => {
+                quizMode = quizModeToggle.checked;
+                quizScoreDisplay.classList.toggle("hidden", !quizMode);
+                quizSubmitContainer.classList.toggle("hidden", !quizMode);
 
-            // Disable sorting buttons if not viewing main deck
-            gotItButton.disabled = name !== 'Main Deck' || currentDeck.length === 0;
-            didntGetItButton.disabled = name !== 'Main Deck' || currentDeck.length === 0;
-        }
+                // Reset quiz stats when toggling quiz mode
+                if (quizMode) {
+                    correctAnswers = 0;
+                    totalAttempts = 0;
+                    updateQuizStats();
+                    showMessage("Quiz mode enabled! Select your answer and click Submit.");
+                } else {
+                    showMessage("Standard flashcard mode enabled.");
+                }
 
-
-        /**
-         * Displays the current card based on the currentCardIndex.
-         */
-        function displayCurrentCard() {
-            card.classList.remove('is-flipped'); // Ensure card starts unflipped
-            isFlipped = false;
-
-            if (currentCardIndex < currentDeck.length) {
-                const cardData = currentDeck[currentCardIndex];
-                cardFront.textContent = cardData.front;
-                cardBack.textContent = cardData.back;
-                cardContainer.classList.remove('opacity-50'); // Make card visible
-            } else {
-                // Handle end of deck
-                cardFront.textContent = `End of ${currentDeckName}.`;
-                cardBack.textContent = '';
-                 // Optionally keep the card slightly visible but indicate it's done
-                cardContainer.classList.add('opacity-50');
-            }
-             updateUI(); // Update counts and button states
-        }
-
-        /**
-         * Moves to the next card in the current deck.
-         */
-        function moveToNextCard() {
-            if (currentCardIndex < currentDeck.length) {
-                currentCardIndex++;
+                // Redisplay current card with/without quiz interface
                 displayCurrentCard();
+            });
+
+            // Submit Answer Button
+            submitAnswerButton.addEventListener("click", checkAnswer);
+
+            // "Got It" Button
+            gotItButton.addEventListener("click", () => {
+                if (currentCardIndex < currentDeck.length) {
+                    const cardToMove = currentDeck[currentCardIndex];
+                    // Only move from main deck to piles
+                    if (currentDeckName === "Main Deck") {
+                        gotItPile.push(cardToMove);
+                    }
+                    moveToNextCard();
+                }
+            });
+
+            // "Didn't Get It" Button
+            didntGetItButton.addEventListener("click", () => {
+                if (currentCardIndex < currentDeck.length) {
+                    const cardToMove = currentDeck[currentCardIndex];
+                    // Only move from main deck to piles
+                    if (currentDeckName === "Main Deck") {
+                        didntGetItPile.push(cardToMove);
+                    }
+                    moveToNextCard();
+                }
+            });
+
+            // View Pile Buttons
+            viewGotItPileButton.addEventListener("click", () => loadDeck(gotItPile, "'Got It' Pile"));
+            viewDidntGetItPileButton.addEventListener("click", () => loadDeck(didntGetItPile, "'Didn't Get It' Pile"));
+            viewMainDeckButton.addEventListener("click", () => loadDeck(mainDeck, "Main Deck"));
+
+            // --- Functions ---
+
+            /**
+             * Handles the file selection and processing.
+             * @param {Event} event - The file input change event.
+             */
+            function handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (!file) {
+                    return; // No file selected
+                }
+
+                fileNameDisplay.textContent = `Loaded: ${file.name}`;
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    const text = e.target.result;
+                    parseFileContent(text);
+                    // Reset piles when a new file is loaded
+                    gotItPile = [];
+                    didntGetItPile = [];
+                    loadDeck(mainDeck, "Main Deck"); // Load the new main deck
+                    showMessage(`Loaded ${mainDeck.length} cards.`);
+                };
+
+                reader.onerror = () => {
+                    showMessage("Error reading file.", "error");
+                    fileNameDisplay.textContent = ""; // Clear file name on error
+                };
+
+                reader.readAsText(file);
             }
-             // No need for an 'else' here, displayCurrentCard handles the end state
-        }
 
-        /**
-         * Shuffles the deck using the Fisher-Yates algorithm.
-         * @param {Array} deck - The deck (array of cards) to shuffle.
-         */
-        function shuffleDeck(deck) {
-            for (let i = deck.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [deck[i], deck[j]] = [deck[j], deck[i]]; // Swap elements
+            /**
+             * Parses the text content from the file into flashcards.
+             * Supports both standard flashcards and multiple choice questions.
+             * @param {string} text - The content of the file.
+             */
+            function parseFileContent(text) {
+                mainDeck = []; // Clear previous main deck
+                const lines = text.split("\n");
+
+                // First pass: identify and process each card
+                let i = 0;
+                while (i < lines.length) {
+                    const line = lines[i].trim();
+                    if (!line) {
+                        i++; // Skip empty lines
+                        continue;
+                    }
+
+                    // Special handling for lines with "Choices:" keyword, which indicates multiple choice
+                    if (line.includes("Choices:")) {
+                        const splitByComma = line.split(",");
+                        const lastIndex = splitByComma.length - 1;
+
+                        // The answer is the last part after the comma
+                        const answerText = splitByComma[lastIndex].trim();
+
+                        // Everything before the last comma is the question with choices
+                        const questionWithChoices = splitByComma.slice(0, lastIndex).join(",").trim();
+
+                        // Process multiple choice question
+                        if (answerText.includes(";")) {
+                            // Multiple answers separated by semicolons
+                            const answers = answerText
+                                .split(";")
+                                .map((a) => a.trim())
+                                .filter((a) => a);
+                            processMultipleChoiceQuestion(questionWithChoices, answers);
+                        } else {
+                            // Single answer
+                            processMultipleChoiceQuestion(questionWithChoices, [answerText]);
+                        }
+                    } else {
+                        // Standard flashcard processing
+                        let parts = line.split(","); // Try comma first
+                        if (parts.length < 2) {
+                            parts = line.split("\t"); // Try tab if comma fails
+                        }
+
+                        if (parts.length >= 2) {
+                            const questionText = parts[0].trim();
+                            const answerText = parts
+                                .slice(1)
+                                .join(parts.length > 2 ? (line.includes("\t") ? "\t" : ",") : "")
+                                .trim();
+
+                            // Check if this might be a multiple choice question with semicolons
+                            if (answerText.includes(";")) {
+                                // This is a multiple choice format with multiple answers
+                                const answers = answerText
+                                    .split(";")
+                                    .map((a) => a.trim())
+                                    .filter((a) => a);
+
+                                // Process the multiple choice question
+                                processMultipleChoiceQuestion(questionText, answers);
+                            } else {
+                                // Regular flashcard
+                                if (questionText && answerText) {
+                                    mainDeck.push({
+                                        front: questionText,
+                                        back: answerText,
+                                        isMultipleChoice: false,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    i++;
+                }
+
+                // Shuffle choices for all multiple choice questions
+                for (let card of mainDeck) {
+                    if (card.isMultipleChoice) {
+                        shuffleChoices(card);
+                    }
+                }
             }
-        }
 
-        /**
-         * Updates the UI elements like card count and button states.
-         */
-        function updateUI() {
-            const remainingCards = currentDeck.length - currentCardIndex;
-            cardCountDisplay.textContent = remainingCards > 0 ? remainingCards : 0;
-            currentDeckNameDisplay.textContent = currentDeckName;
+            /**
+             * Process a multiple choice question from the parsed file
+             * @param {string} questionText - The question text
+             * @param {Array<string>} answers - Array of correct answers
+             */
+            function processMultipleChoiceQuestion(questionText, answers) {
+                // Check if the format matches from the AWS questions
+                const matches = questionText.match(/\(Choose (\d+)\)/i);
+                const numAnswersToChoose = matches ? parseInt(matches[1]) : 1;
 
-            // Update pile counts
-            gotItCountDisplay.textContent = gotItPile.length;
-            didntGetItCountDisplay.textContent = didntGetItPile.length;
+                // Extract all choices from the question text
+                let choices = [];
+                if (questionText.includes("Choices:")) {
+                    const choicePart = questionText.split("Choices:")[1].trim();
 
-            // Enable/disable buttons based on state
-            const hasCardsInCurrentDeck = currentDeck.length > 0;
-            const cardsRemainingInView = currentCardIndex < currentDeck.length;
+                    // First try to split by semicolon
+                    choices = choicePart
+                        .split(";")
+                        .map((c) => c.trim())
+                        .filter((c) => c);
 
-            shuffleButton.disabled = !hasCardsInCurrentDeck;
-            // Sorting buttons only active for Main Deck and if cards remain
-            gotItButton.disabled = currentDeckName !== 'Main Deck' || !cardsRemainingInView;
-            didntGetItButton.disabled = currentDeckName !== 'Main Deck' || !cardsRemainingInView;
+                    // If there are not enough choices in this format, try splitting by comma
+                    if (choices.length <= 1) {
+                        choices = choicePart
+                            .split(",")
+                            .map((c) => c.trim())
+                            .filter((c) => c);
+                    }
 
-            // Pile view buttons disabled if empty or currently viewed
-            viewGotItPileButton.disabled = gotItPile.length === 0 || currentDeckName === "'Got It' Pile";
-            viewDidntGetItPileButton.disabled = didntGetItPile.length === 0 || currentDeckName === "'Didn't Get It' Pile";
+                    // Remove choices from the question
+                    questionText = questionText.split("Choices:")[0].trim();
+                }
 
-             // Disable card flip if no cards are loaded or deck finished
-             card.style.cursor = cardsRemainingInView ? 'pointer' : 'default';
+                if (choices.length <= 1) {
+                    // Couldn't extract sufficient choices, treat as normal card
+                    mainDeck.push({
+                        front: questionText,
+                        back: answers.join("\n"),
+                        isMultipleChoice: false,
+                    });
+                    return;
+                }
 
-        }
+                // Create the front text with question and options
+                const frontText = questionText;
 
-         /**
-         * Shows a temporary message to the user.
-         * @param {string} message - The text to display.
-         * @param {string} type - 'info' (default) or 'error'.
-         */
-        function showMessage(message, type = 'info') {
-            messageText.textContent = message;
-            // Basic styling differentiation (optional)
-            messageBox.classList.toggle('bg-red-600', type === 'error');
-            messageBox.classList.toggle('bg-gray-800', type !== 'error');
+                // Format the back with correct answers
+                let backText = "";
 
-            messageBox.classList.add('show');
-            setTimeout(() => {
-                messageBox.classList.remove('show');
-            }, 3000); // Hide after 3 seconds
-        }
+                // Add labels (A, B, C, etc.) to choices for display
+                const labeledChoices = choices.map((choice, index) => {
+                    const label = String.fromCharCode(65 + index); // A, B, C, etc.
+                    return { label, text: choice, isCorrect: answers.includes(choice) };
+                });
 
-    </script>
+                // Format back text to show correct answers with their labels
+                const correctChoices = labeledChoices.filter((c) => c.isCorrect);
 
-</body>
+                if (correctChoices.length > 0) {
+                    if (correctChoices.length === 1) {
+                        backText = `${correctChoices[0].label}) ${correctChoices[0].text}`;
+                    } else {
+                        backText = correctChoices.map((c) => `${c.label}) ${c.text}`).join("\n");
+                    }
+                } else {
+                    // Fallback if no matching correct answers found
+                    backText = answers.join("\n");
+                }
+
+                // Add the card to the deck
+                mainDeck.push({
+                    front: frontText,
+                    back: backText,
+                    choices: labeledChoices,
+                    isMultipleChoice: true,
+                    numAnswersToChoose: numAnswersToChoose,
+                });
+            }
+
+            /**
+             * Shuffles the choices for a multiple choice card
+             * @param {Object} card - The card object with choices
+             */
+            function shuffleChoices(card) {
+                if (!card.isMultipleChoice || !card.choices || card.choices.length === 0) return;
+
+                // Shuffle the choices
+                for (let i = card.choices.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [card.choices[i], card.choices[j]] = [card.choices[j], card.choices[i]];
+                }
+
+                // Update the labels after shuffling (A, B, C, etc.)
+                card.choices = card.choices.map((choice, index) => {
+                    return {
+                        ...choice,
+                        label: String.fromCharCode(65 + index), // A, B, C, etc.
+                    };
+                });
+
+                // Update the back text to reflect the new order
+                const correctChoices = card.choices.filter((c) => c.isCorrect);
+                if (correctChoices.length === 1) {
+                    card.back = `${correctChoices[0].label}) ${correctChoices[0].text}`;
+                } else {
+                    card.back = correctChoices.map((c) => `${c.label}) ${c.text}`).join("\n");
+                }
+            }
+
+            /**
+             * Loads a specific deck (main, gotIt, didntGetIt) into the view.
+             * @param {Array} deck - The array of card objects to load.
+             * @param {string} name - The name of the deck being loaded.
+             */
+            function loadDeck(deck, name) {
+                currentDeck = [...deck]; // Use a copy so shuffling doesn't affect original piles directly
+                currentDeckName = name;
+                currentCardIndex = 0;
+                isFlipped = false;
+                displayCurrentCard();
+                updateUI();
+
+                // Show/hide the "Back to Main Deck" button
+                viewMainDeckButton.classList.toggle("hidden", name === "Main Deck");
+                // Disable pile view buttons if that pile is active
+                viewGotItPileButton.disabled = name === "'Got It' Pile";
+                viewDidntGetItPileButton.disabled = name === "'Didn't Get It' Pile";
+
+                // Disable sorting buttons if not viewing main deck
+                gotItButton.disabled = name !== "Main Deck" || currentDeck.length === 0;
+                didntGetItButton.disabled = name !== "Main Deck" || currentDeck.length === 0;
+            }
+
+            /**
+             * Displays the current card based on the currentCardIndex.
+             */
+            function displayCurrentCard() {
+                card.classList.remove("is-flipped"); // Ensure card starts unflipped
+                isFlipped = false;
+
+                if (currentCardIndex < currentDeck.length) {
+                    const cardData = currentDeck[currentCardIndex];
+
+                    // Clear previous content
+                    cardFront.innerHTML = "";
+                    cardBack.innerHTML = "";
+
+                    // Create content container for front
+                    const frontContent = document.createElement("div");
+                    frontContent.className = "text-content";
+
+                    // Add front content
+                    if (cardData.isMultipleChoice) {
+                        // Multiple choice question
+                        const questionPart = document.createElement("div");
+                        questionPart.className = "mb-4";
+                        questionPart.textContent = cardData.front;
+                        frontContent.appendChild(questionPart);
+
+                        // Add choice list
+                        const choiceList = document.createElement("div");
+                        choiceList.className = "choice-list";
+                        choiceList.setAttribute("data-card-index", currentCardIndex);
+
+                        if (quizMode) {
+                            // In quiz mode, add selectable options
+                            const isMultipleAnswer = cardData.numAnswersToChoose > 1;
+                            const inputType = isMultipleAnswer ? "checkbox" : "radio";
+                            const inputName = `choice-${currentCardIndex}`;
+
+                            cardData.choices.forEach((choice, idx) => {
+                                const choiceItem = document.createElement("div");
+                                choiceItem.className = "choice-item";
+
+                                // Create input element (radio for single, checkbox for multiple)
+                                const input = document.createElement("input");
+                                input.type = inputType;
+                                input.name = inputName;
+                                input.id = `${inputName}-${idx}`;
+                                input.value = choice.label;
+                                input.dataset.choiceIndex = idx;
+
+                                // Create label element
+                                const label = document.createElement("label");
+                                label.htmlFor = `${inputName}-${idx}`;
+                                label.className = "choice-label";
+                                label.textContent = `${choice.label}) ${choice.text}`;
+
+                                // Add elements to the choice item
+                                choiceItem.appendChild(input);
+                                choiceItem.appendChild(label);
+                                choiceList.appendChild(choiceItem);
+                            });
+
+                            frontContent.appendChild(choiceList);
+                        } else {
+                            // Standard display for multiple choice in non-quiz mode
+                            cardData.choices.forEach((choice) => {
+                                const choiceItem = document.createElement("div");
+                                choiceItem.className = "choice-item";
+                                choiceItem.textContent = `${choice.label}) ${choice.text}`;
+                                choiceList.appendChild(choiceItem);
+                            });
+
+                            frontContent.appendChild(choiceList);
+                        }
+                    } else {
+                        // Standard flashcard
+                        frontContent.textContent = cardData.front;
+                    }
+                    cardFront.appendChild(frontContent);
+
+                    // Create content container for back
+                    const backContent = document.createElement("div");
+                    backContent.className = "text-content";
+                    backContent.textContent = cardData.back;
+                    cardBack.appendChild(backContent);
+
+                    cardContainer.classList.remove("opacity-50"); // Make card visible
+                } else {
+                    // Handle end of deck
+                    cardFront.textContent = `End of ${currentDeckName}.`;
+                    cardBack.textContent = "";
+                    // Optionally keep the card slightly visible but indicate it's done
+                    cardContainer.classList.add("opacity-50");
+                }
+                updateUI(); // Update counts and button states
+            }
+
+            /**
+			 * Moves to the next card in the current deck.
+			 */
+			function moveToNextCard() {
+				if (currentCardIndex < currentDeck.length) {
+					currentCardIndex++;
+					
+					// Clear any feedback messages from previous cards
+					if (feedbackContainer) {
+						feedbackContainer.innerHTML = '';
+					}
+					
+					displayCurrentCard();
+				}
+				// No need for an 'else' here, displayCurrentCard handles the end state
+			}
+
+            /**
+             * Shuffles the deck using the Fisher-Yates algorithm.
+             * @param {Array} deck - The deck (array of cards) to shuffle.
+             */
+            function shuffleDeck(deck) {
+                for (let i = deck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [deck[i], deck[j]] = [deck[j], deck[i]]; // Swap elements
+                }
+
+                // Also shuffle choices for each multiple choice card
+                for (let card of deck) {
+                    if (card.isMultipleChoice) {
+                        shuffleChoices(card);
+                    }
+                }
+            }
+
+            /**
+             * Updates the UI elements like card count and button states.
+             */
+            function updateUI() {
+                const remainingCards = currentDeck.length - currentCardIndex;
+                cardCountDisplay.textContent = remainingCards > 0 ? remainingCards : 0;
+                currentDeckNameDisplay.textContent = currentDeckName;
+
+                // Update pile counts
+                gotItCountDisplay.textContent = gotItPile.length;
+                didntGetItCountDisplay.textContent = didntGetItPile.length;
+
+                // Enable/disable buttons based on state
+                const hasCardsInCurrentDeck = currentDeck.length > 0;
+                const cardsRemainingInView = currentCardIndex < currentDeck.length;
+
+                shuffleButton.disabled = !hasCardsInCurrentDeck;
+
+                // In quiz mode, hide manual sorting buttons
+                const showManualButtons = !quizMode;
+                gotItButton.style.display = showManualButtons ? "block" : "none";
+                didntGetItButton.style.display = showManualButtons ? "block" : "none";
+
+                // Sorting buttons only active for Main Deck and if cards remain
+                gotItButton.disabled = currentDeckName !== "Main Deck" || !cardsRemainingInView;
+                didntGetItButton.disabled = currentDeckName !== "Main Deck" || !cardsRemainingInView;
+
+                // Pile view buttons disabled if empty or currently viewed
+                viewGotItPileButton.disabled = gotItPile.length === 0 || currentDeckName === "'Got It' Pile";
+                viewDidntGetItPileButton.disabled = didntGetItPile.length === 0 || currentDeckName === "'Didn't Get It' Pile";
+
+                // Disable card flip if no cards are loaded or deck finished or in quiz mode
+                card.style.cursor = cardsRemainingInView && !quizMode ? "pointer" : "default";
+            }
+
+            /**
+             * Updates the quiz statistics display
+             */
+            function updateQuizStats() {
+                correctAnswersDisplay.textContent = correctAnswers;
+                totalAttemptsDisplay.textContent = totalAttempts;
+            }
+
+            /**
+             * Shows a temporary message to the user.
+             * @param {string} message - The text to display.
+             * @param {string} type - 'info' (default), 'error', 'success', or 'warning'.
+             */
+            function showMessage(message, type = "info") {
+                messageText.textContent = message;
+                // Styling differentiation based on message type
+                messageBox.classList.remove("bg-red-600", "bg-gray-800", "bg-green-600", "bg-yellow-500");
+
+                if (type === "error") {
+                    messageBox.classList.add("bg-red-600");
+                } else if (type === "success") {
+                    messageBox.classList.add("bg-green-600");
+                } else if (type === "warning") {
+                    messageBox.classList.add("bg-yellow-500");
+                } else {
+                    messageBox.classList.add("bg-gray-800"); // info (default)
+                }
+
+                messageBox.classList.add("show");
+                setTimeout(() => {
+                    messageBox.classList.remove("show");
+                }, 3000); // Hide after 3 seconds
+            }
+
+            /**
+             * Checks the user's answer against the correct answer
+             */
+            // This function needs to be modified to fix the issue
+            function checkAnswer() {
+                if (currentCardIndex >= currentDeck.length) return;
+
+                const cardData = currentDeck[currentCardIndex];
+                if (!cardData.isMultipleChoice) return;
+
+                feedbackContainer.innerHTML = "";
+                const cardIndex = currentCardIndex;
+                const isMultipleAnswer = cardData.numAnswersToChoose > 1;
+                const inputName = `choice-${cardIndex}`;
+
+                // Get selected answers
+                const selectedInputs = document.querySelectorAll(`input[name="${inputName}"]:checked`);
+
+                // If nothing selected, show a warning
+                if (selectedInputs.length === 0) {
+                    feedbackContainer.textContent = "Please select an answer.";
+                    feedbackContainer.className = "text-yellow-500 font-semibold mt-2";
+                    return;
+                }
+
+                // Get correct choices
+                const correctChoices = cardData.choices.filter((choice) => choice.isCorrect);
+
+                // Check if answer is correct
+                let isCorrect = false;
+
+                if (isMultipleAnswer) {
+                    // For multiple answer questions:
+                    // 1. The number of selected answers must match the number of correct answers
+                    // 2. All selected answers must be correct
+
+                    // Check if the user selected the correct number of answers
+                    if (selectedInputs.length !== correctChoices.length) {
+                        isCorrect = false;
+                    } else {
+                        // Check if all selected answers are correct
+                        isCorrect = true;
+                        for (const input of selectedInputs) {
+                            const choiceIndex = parseInt(input.dataset.choiceIndex);
+                            if (!cardData.choices[choiceIndex].isCorrect) {
+                                isCorrect = false;
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    // For single answer questions, just check if the selected answer is correct
+                    const selectedIndex = parseInt(selectedInputs[0].dataset.choiceIndex);
+                    isCorrect = cardData.choices[selectedIndex].isCorrect;
+                }
+
+                // Update quiz stats
+                totalAttempts++;
+                if (isCorrect) {
+                    correctAnswers++;
+                }
+                updateQuizStats();
+
+                // Show feedback
+                if (isCorrect) {
+                    feedbackContainer.textContent = "Correct! 🎉";
+                    feedbackContainer.className = "feedback-correct";
+
+                    // Move to "Got It" pile if we're in the main deck
+                    if (currentDeckName === "Main Deck") {
+                        gotItPile.push(cardData);
+                    }
+
+                    // Show success message
+                    showMessage('Correct! Card added to "Got It" pile.', "success");
+
+                    // Move to next card after a slight delay
+                    setTimeout(() => {
+                        moveToNextCard();
+                    }, 1500);
+                } else {
+                    feedbackContainer.textContent = "Incorrect! Try again or flip to see the answer.";
+                    feedbackContainer.className = "feedback-incorrect";
+
+                    // Add the card to "Didn't Get It" pile immediately if we're in the main deck
+                    // ADDED THIS LINE - Add card to pile as soon as we know it's incorrect
+                    let cardAlreadyAdded = false;
+                    if (currentDeckName === "Main Deck") {
+                        didntGetItPile.push(cardData);
+                        cardAlreadyAdded = true;
+                        showMessage('Card added to "Didn\'t Get It" pile.', "warning");
+                    }
+
+                    // Add "Show Answer" and "Move to Next" buttons
+                    const buttonContainer = document.createElement("div");
+                    buttonContainer.className = "flex justify-center gap-2 mt-2";
+
+                    const showAnswerButton = document.createElement("button");
+                    showAnswerButton.className = "bg-gray-500 hover:bg-gray-600 text-white font-medium py-1 px-3 rounded-md text-sm";
+                    showAnswerButton.textContent = "Show Answer";
+                    showAnswerButton.addEventListener("click", () => {
+                        isFlipped = true;
+                        card.classList.add("is-flipped");
+
+                        // REMOVED - Don't add to pile here, already done above
+                        // if (currentDeckName === 'Main Deck') {
+                        //     didntGetItPile.push(cardData);
+                        // }
+
+                        // Show message only if we didn't already show it
+                        if (!cardAlreadyAdded) {
+                            showMessage("Showing answer...", "info");
+                        }
+                    });
+
+                    const nextCardButton = document.createElement("button");
+                    nextCardButton.className = "bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-3 rounded-md text-sm";
+                    nextCardButton.textContent = "Next Card";
+                    nextCardButton.addEventListener("click", () => {
+                        // REMOVED - Don't add to pile here, already done above
+                        // if (currentDeckName === 'Main Deck') {
+                        //     didntGetItPile.push(cardData);
+                        // }
+
+                        moveToNextCard();
+                    });
+
+                    buttonContainer.appendChild(showAnswerButton);
+                    buttonContainer.appendChild(nextCardButton);
+                    feedbackContainer.appendChild(buttonContainer);
+                }
+            }
+        </script>
+    </body>
 </html>
