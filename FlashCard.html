@@ -242,6 +242,15 @@
                 <p class="text-xs text-gray-500 mt-1">Use .txt or .csv file. Format: Front Text,Back Text (one per line)</p>
                 <p id="fileName" class="text-sm text-gray-600 mt-1"></p>
             </div>
+			<div class="mb-4 text-center">
+				<div class="flex flex-col items-center">
+					<label for="fileSelector" class="text-sm text-gray-700 mb-2">Or select a file:</label>
+					<select id="fileSelector" class="bg-white border border-gray-300 rounded-md py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:border-blue-500 w-full max-w-xs">
+						<option value="">-- Select a file --</option>
+						<!-- File options will be populated here -->
+					</select>
+				</div>
+			</div>
 
             <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
                 <button id="shuffleButton" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">Shuffle</button>
@@ -344,6 +353,76 @@
                     card.classList.toggle("is-flipped", isFlipped);
                 }
             });
+			
+			// List of available files (add your files here)
+			const availableFiles = [
+				{ name: "AWS Cloud Practitioner 1", filename: "aws_cloud_practitioner_1.txt" },
+				{ name: "AWS Cloud Practitioner 1", filename: "aws_cloud_practitioner_2.txt" },
+				{ name: "AWS Cloud Practitioner Custom", filename: "aws_cloud_practitioner_custom.txt" }
+				// Add more files as needed
+			];
+
+			// DOM element for the file selector
+			const fileSelector = document.getElementById('fileSelector');
+
+			// Populate the dropdown with file options
+			function populateFileDropdown() {
+				// Clear existing options (except the default)
+				while (fileSelector.options.length > 1) {
+					fileSelector.remove(1);
+				}
+				
+				// Add file options
+				availableFiles.forEach(file => {
+					const option = document.createElement('option');
+					option.value = file.filename;
+					option.textContent = file.name;
+					fileSelector.appendChild(option);
+				});
+			}
+
+			// Handle file selection from dropdown
+			fileSelector.addEventListener('change', async function() {
+				const selectedFile = this.value;
+				if (!selectedFile) return; // Nothing selected
+				
+				try {
+					// Fetch the selected file
+					const response = await fetch(selectedFile);
+					if (!response.ok) {
+						throw new Error(`Failed to load file: ${response.status} ${response.statusText}`);
+					}
+					
+					const text = await response.text();
+					
+					// Process the file content (reusing existing functionality)
+					parseFileContent(text);
+					
+					// Reset piles when a new file is loaded
+					gotItPile = [];
+					didntGetItPile = [];
+					
+					// Display filename
+					fileNameDisplay.textContent = `Loaded: ${selectedFile}`;
+					
+					// Load the new main deck
+					loadDeck(mainDeck, 'Main Deck');
+					
+					showMessage(`Loaded ${mainDeck.length} cards from ${selectedFile}.`);
+					
+					// Reset the file input to avoid confusion
+					fileInput.value = '';
+					
+				} catch (error) {
+					console.error('Error loading file:', error);
+					showMessage('Error loading file. Check console for details.', 'error');
+				}
+			});
+
+			// Initialize the dropdown when the page loads
+			document.addEventListener('DOMContentLoaded', function() {
+				populateFileDropdown();
+			});
 
             // Shuffle Button
             shuffleButton.addEventListener("click", () => {
