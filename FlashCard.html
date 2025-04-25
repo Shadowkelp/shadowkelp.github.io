@@ -36,26 +36,31 @@
                 transform: rotateY(180deg); /* Flip the card */
             }
 
-            .card-face {
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                backface-visibility: hidden; /* Hides the back side of the element when facing away */
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                align-items: center;
-                padding: 1.5rem; /* p-6 */
-                border-radius: 0.5rem; /* rounded-lg */
-                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
-                text-align: center;
-                font-size: 1.125rem; /* text-lg */
-                line-height: 1.75rem;
-                overflow-wrap: break-word; /* Break long words */
-                word-wrap: break-word; /* Legacy */
-                hyphens: auto; /* Add hyphens if needed */
-                overflow-y: auto; /* Add scrolling for content that exceeds height */
-            }
+            /* Improve scrolling functionality for card faces */
+			.card-face {
+				position: absolute;
+				width: 100%;
+				height: 100%;
+				backface-visibility: hidden; /* Hides the back side of the element when facing away */
+				display: flex;
+				flex-direction: column;
+				justify-content: space-between;
+				align-items: center;
+				padding: 1.5rem; /* p-6 */
+				border-radius: 0.5rem; /* rounded-lg */
+				box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
+				text-align: center;
+				font-size: 1.125rem; /* text-lg */
+				line-height: 1.75rem;
+				overflow-wrap: break-word; /* Break long words */
+				word-wrap: break-word; /* Legacy */
+				hyphens: auto; /* Add hyphens if needed */
+				overflow-y: auto; /* Add scrolling for content that exceeds height */
+				
+				/* Fix for scroll wheel issue */
+				-webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS devices */
+				overscroll-behavior: contain; /* Prevent scroll chaining */
+			}
 
             .card-front {
                 background-color: white; /* bg-white */
@@ -132,11 +137,13 @@
                 flex: 1;
             }
 
-            /* For text alignment in cards */
-            .text-content {
-                width: 100%;
-                white-space: pre-line; /* Preserves line breaks in content */
-            }
+            /* Make sure text content is properly scrollable */
+			.text-content {
+				width: 100%;
+				white-space: pre-line; /* Preserves line breaks in content */
+				max-height: 100%; /* Ensure content doesn't overflow the card */
+				overflow-y: auto; /* Enable vertical scrolling if needed */
+			}
 
             /* Quiz mode styles */
             .quiz-actions {
@@ -322,6 +329,53 @@
                 // Redisplay current card with/without quiz interface
                 displayCurrentCard();
             });
+
+			// Fix for scroll wheel handling
+			document.addEventListener('DOMContentLoaded', function() {
+				// Prevent card flip when scrolling inside a card face
+				document.querySelectorAll('.card-face').forEach(cardFace => {
+					cardFace.addEventListener('wheel', function(event) {
+						// Don't propagate the wheel event to parent elements if this element can scroll
+						if (this.scrollHeight > this.clientHeight) {
+							// Check if we're at the top and scrolling up, or at the bottom and scrolling down
+							const scrollTop = this.scrollTop;
+							const isAtTop = scrollTop === 0;
+							const isAtBottom = scrollTop + this.clientHeight >= this.scrollHeight;
+							
+							if ((isAtTop && event.deltaY < 0) || (isAtBottom && event.deltaY > 0)) {
+								// At the boundary, let the parent handle it
+								return;
+							}
+							
+							// Inside scrollable area, prevent parent from getting the event
+							event.stopPropagation();
+						}
+					}, { passive: false });
+				});
+				
+				// Re-attach event listeners when displaying a card
+				const originalDisplayCurrentCard = displayCurrentCard;
+				displayCurrentCard = function() {
+					originalDisplayCurrentCard();
+					
+					// Re-attach scroll event handlers to the new card faces
+					document.querySelectorAll('.card-face').forEach(cardFace => {
+						cardFace.addEventListener('wheel', function(event) {
+							if (this.scrollHeight > this.clientHeight) {
+								const scrollTop = this.scrollTop;
+								const isAtTop = scrollTop === 0;
+								const isAtBottom = scrollTop + this.clientHeight >= this.scrollHeight;
+								
+								if ((isAtTop && event.deltaY < 0) || (isAtBottom && event.deltaY > 0)) {
+									return;
+								}
+								
+								event.stopPropagation();
+							}
+						}, { passive: false });
+					});
+				};
+			});
 
             // Submit Answer Button
             submitAnswerButton.addEventListener("click", checkAnswer);
