@@ -662,78 +662,117 @@
              * @param {Array<string>} answers - Array of correct answers
              */
             function processMultipleChoiceQuestion(questionText, answers) {
-                // Check if the format matches from the AWS questions
-                const matches = questionText.match(/\(Choose (\d+)\)/i);
-                const numAnswersToChoose = matches ? parseInt(matches[1]) : 1;
-
+                // First, detect if this is a multiple choice question (look for "Choose X" pattern)
+                let numAnswersToChoose = 1; // Default to single answer
+                let choosePattern = /\(?Choose\s+(\d+|TWO|THREE|FOUR|FIVE)\)?/i;
+                let matches = questionText.match(choosePattern);
+                
+                // If found, extract the number
+                if (matches) {
+                    const numberText = matches[1].toUpperCase();
+                    // Convert text numbers to digits
+                    if (numberText === "TWO") numAnswersToChoose = 2;
+                    else if (numberText === "THREE") numAnswersToChoose = 3;
+                    else if (numberText === "FOUR") numAnswersToChoose = 4;
+                    else if (numberText === "FIVE") numAnswersToChoose = 5;
+                    else numAnswersToChoose = parseInt(numberText);
+                    
+                    // Remove the "Choose X" text from the question - we'll add it back at the end
+                    questionText = questionText.replace(matches[0], '').trim();
+                }
+                
+                // Handle AWS exam-style questions that have Choose X in various formats
+                if (!matches) {
+                    matches = questionText.match(/\(Select\s+(\d+)\)/i);
+                    if (matches) {
+                        numAnswersToChoose = parseInt(matches[1]);
+                        questionText = questionText.replace(matches[0], '').trim();
+                    }
+                }
+                
+                // Check if there are multiple correct answers even if not specified in the question
+                if (answers.length > 1 && numAnswersToChoose === 1) {
+                    numAnswersToChoose = answers.length;
+                }
+                
                 // Extract all choices from the question text
                 let choices = [];
-                if (questionText.includes("Choices:")) {
-                    const choicePart = questionText.split("Choices:")[1].trim();
-
+                if (questionText.includes('Choices:')) {
+                    const choicePart = questionText.split('Choices:')[1].trim();
+                    
                     // First try to split by semicolon
-                    choices = choicePart
-                        .split(";")
-                        .map((c) => c.trim())
-                        .filter((c) => c);
-
+                    choices = choicePart.split(';').map(c => c.trim()).filter(c => c);
+                    
                     // If there are not enough choices in this format, try splitting by comma
                     if (choices.length <= 1) {
-                        choices = choicePart
-                            .split(",")
-                            .map((c) => c.trim())
-                            .filter((c) => c);
+                        choices = choicePart.split(',').map(c => c.trim()).filter(c => c);
                     }
-
+                    
                     // Remove choices from the question
-                    questionText = questionText.split("Choices:")[0].trim();
+                    questionText = questionText.split('Choices:')[0].trim();
                 }
-
+                
+                // Add "(Choose X)" to the end of the question if it doesn't already have it
+                // and if numAnswersToChoose > 1
+                if (numAnswersToChoose > 1) {
+                    const chooseText = numAnswersToChoose === 2 ? "TWO" : 
+                                    numAnswersToChoose === 3 ? "THREE" : 
+                                    numAnswersToChoose === 4 ? "FOUR" : 
+                                    numAnswersToChoose === 5 ? "FIVE" : numAnswersToChoose.toString();
+                    
+                    if (!questionText.includes(`(Choose ${chooseText})`) && 
+                        !questionText.includes(`(Choose ${numAnswersToChoose})`) &&
+                        !questionText.includes(`(Select ${numAnswersToChoose})`)) {
+                        questionText = `${questionText} (Choose ${chooseText})`;
+                    }
+                }
+                
                 if (choices.length <= 1) {
                     // Couldn't extract sufficient choices, treat as normal card
                     mainDeck.push({
                         front: questionText,
-                        back: answers.join("\n"),
-                        isMultipleChoice: false,
+                        back: answers.join('\n'),
+                        isMultipleChoice: false
                     });
                     return;
                 }
-
+                
                 // Create the front text with question and options
                 const frontText = questionText;
-
+                
                 // Format the back with correct answers
-                let backText = "";
-
+                let backText = '';
+                
                 // Add labels (A, B, C, etc.) to choices for display
                 const labeledChoices = choices.map((choice, index) => {
                     const label = String.fromCharCode(65 + index); // A, B, C, etc.
                     return { label, text: choice, isCorrect: answers.includes(choice) };
                 });
-
+                
                 // Format back text to show correct answers with their labels
-                const correctChoices = labeledChoices.filter((c) => c.isCorrect);
-
+                const correctChoices = labeledChoices.filter(c => c.isCorrect);
+                
                 if (correctChoices.length > 0) {
                     if (correctChoices.length === 1) {
                         backText = `${correctChoices[0].label}) ${correctChoices[0].text}`;
                     } else {
-                        backText = correctChoices.map((c) => `${c.label}) ${c.text}`).join("\n");
+                        backText = correctChoices.map(c => `${c.label}) ${c.text}`).join('\n');
                     }
                 } else {
                     // Fallback if no matching correct answers found
-                    backText = answers.join("\n");
+                    backText = answers.join('\n');
                 }
-
+                
                 // Add the card to the deck
                 mainDeck.push({
                     front: frontText,
                     back: backText,
                     choices: labeledChoices,
                     isMultipleChoice: true,
-                    numAnswersToChoose: numAnswersToChoose,
+                    numAnswersToChoose: numAnswersToChoose
                 });
             }
+
 
             /**
              * Shuffles the choices for a multiple choice card
@@ -790,76 +829,103 @@
             }
 
             /**
-             * Displays the current card based on the currentCardIndex.
+             * Adds a real-time selection counter for multiple choice questions
              */
             function displayCurrentCard() {
-                card.classList.remove("is-flipped"); // Ensure card starts unflipped
+                card.classList.remove('is-flipped'); // Ensure card starts unflipped
                 isFlipped = false;
 
                 if (currentCardIndex < currentDeck.length) {
                     const cardData = currentDeck[currentCardIndex];
-
+                    
                     // Clear previous content
-                    cardFront.innerHTML = "";
-                    cardBack.innerHTML = "";
-
+                    cardFront.innerHTML = '';
+                    cardBack.innerHTML = '';
+                    
                     // Create content container for front
-                    const frontContent = document.createElement("div");
-                    frontContent.className = "text-content";
-
+                    const frontContent = document.createElement('div');
+                    frontContent.className = 'text-content';
+                    
                     // Add front content
                     if (cardData.isMultipleChoice) {
                         // Multiple choice question
-                        const questionPart = document.createElement("div");
-                        questionPart.className = "mb-4";
+                        const questionPart = document.createElement('div');
+                        questionPart.className = 'mb-4';
                         questionPart.textContent = cardData.front;
                         frontContent.appendChild(questionPart);
-
+                        
                         // Add choice list
-                        const choiceList = document.createElement("div");
-                        choiceList.className = "choice-list";
-                        choiceList.setAttribute("data-card-index", currentCardIndex);
-
+                        const choiceList = document.createElement('div');
+                        choiceList.className = 'choice-list';
+                        choiceList.setAttribute('data-card-index', currentCardIndex);
+                        
                         if (quizMode) {
                             // In quiz mode, add selectable options
                             const isMultipleAnswer = cardData.numAnswersToChoose > 1;
-                            const inputType = isMultipleAnswer ? "checkbox" : "radio";
+                            const inputType = isMultipleAnswer ? 'checkbox' : 'radio';
                             const inputName = `choice-${currentCardIndex}`;
-
+                            
+                            // Add a message about how many answers to select
+                            if (isMultipleAnswer) {
+                                const selectionContainer = document.createElement('div');
+                                selectionContainer.className = 'mb-3 flex justify-between items-center';
+                                
+                                const selectInfoText = document.createElement('div');
+                                selectInfoText.className = 'text-sm text-gray-600 font-medium';
+                                selectInfoText.textContent = `Select ${cardData.numAnswersToChoose} answers`;
+                                
+                                // Add a counter that updates as selections are made
+                                const selectionCounter = document.createElement('div');
+                                selectionCounter.className = 'text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-md';
+                                selectionCounter.id = `selection-counter-${currentCardIndex}`;
+                                selectionCounter.textContent = `0 / ${cardData.numAnswersToChoose} selected`;
+                                
+                                selectionContainer.appendChild(selectInfoText);
+                                selectionContainer.appendChild(selectionCounter);
+                                frontContent.appendChild(selectionContainer);
+                            }
+                            
                             cardData.choices.forEach((choice, idx) => {
-                                const choiceItem = document.createElement("div");
-                                choiceItem.className = "choice-item";
-
+                                const choiceItem = document.createElement('div');
+                                choiceItem.className = 'choice-item';
+                                
                                 // Create input element (radio for single, checkbox for multiple)
-                                const input = document.createElement("input");
+                                const input = document.createElement('input');
                                 input.type = inputType;
                                 input.name = inputName;
                                 input.id = `${inputName}-${idx}`;
                                 input.value = choice.label;
                                 input.dataset.choiceIndex = idx;
-
+                                
+                                // For multiple choice questions, add event listener to update the counter
+                                if (isMultipleAnswer) {
+                                    input.addEventListener('change', () => {
+                                        updateSelectionCounter(inputName, cardData.numAnswersToChoose);
+                                    });
+                                }
+                                
                                 // Create label element
-                                const label = document.createElement("label");
+                                const label = document.createElement('label');
                                 label.htmlFor = `${inputName}-${idx}`;
-                                label.className = "choice-label";
+                                label.className = 'choice-label';
                                 label.textContent = `${choice.label}) ${choice.text}`;
-
+                                
                                 // Add elements to the choice item
                                 choiceItem.appendChild(input);
                                 choiceItem.appendChild(label);
                                 choiceList.appendChild(choiceItem);
                             });
-
+                            
                             frontContent.appendChild(choiceList);
                         } else {
                             // Standard display for multiple choice in non-quiz mode
-                            cardData.choices.forEach((choice) => {
-                                const choiceItem = document.createElement("div");
-                                choiceItem.className = "choice-item";
+                            cardData.choices.forEach(choice => {
+                                const choiceItem = document.createElement('div');
+                                choiceItem.className = 'choice-item';
                                 choiceItem.textContent = `${choice.label}) ${choice.text}`;
                                 choiceList.appendChild(choiceItem);
                             });
-
+                            
                             frontContent.appendChild(choiceList);
                         }
                     } else {
@@ -867,22 +933,51 @@
                         frontContent.textContent = cardData.front;
                     }
                     cardFront.appendChild(frontContent);
-
+                    
                     // Create content container for back
-                    const backContent = document.createElement("div");
-                    backContent.className = "text-content";
+                    const backContent = document.createElement('div');
+                    backContent.className = 'text-content';
                     backContent.textContent = cardData.back;
                     cardBack.appendChild(backContent);
-
-                    cardContainer.classList.remove("opacity-50"); // Make card visible
+                    
+                    cardContainer.classList.remove('opacity-50'); // Make card visible
                 } else {
                     // Handle end of deck
                     cardFront.textContent = `End of ${currentDeckName}.`;
-                    cardBack.textContent = "";
+                    cardBack.textContent = '';
                     // Optionally keep the card slightly visible but indicate it's done
-                    cardContainer.classList.add("opacity-50");
+                    cardContainer.classList.add('opacity-50');
                 }
                 updateUI(); // Update counts and button states
+            }
+
+            /**
+             * Updates the selection counter for multiple choice questions
+             * @param {string} inputName - The name attribute of the input elements
+             * @param {number} requiredSelections - The number of selections required
+             */
+            function updateSelectionCounter(inputName, requiredSelections) {
+                const selectedInputs = document.querySelectorAll(`input[name="${inputName}"]:checked`);
+                const counter = document.getElementById(`selection-counter-${currentCardIndex}`);
+                
+                if (counter) {
+                    const count = selectedInputs.length;
+                    counter.textContent = `${count} / ${requiredSelections} selected`;
+                    
+                    // Visual feedback based on selection count
+                    counter.className = 'text-sm px-2 py-1 rounded-md';
+                    
+                    if (count === requiredSelections) {
+                        // Correct number of selections
+                        counter.classList.add('bg-green-100', 'text-green-800');
+                    } else if (count > requiredSelections) {
+                        // Too many selections
+                        counter.classList.add('bg-red-100', 'text-red-800');
+                    } else {
+                        // Not enough selections yet
+                        counter.classList.add('bg-blue-100', 'text-blue-800');
+                    }
+                }
             }
 
             /**
@@ -992,51 +1087,63 @@
             /**
              * Checks the user's answer against the correct answer
              */
-            // This function needs to be modified to fix the issue
             function checkAnswer() {
                 if (currentCardIndex >= currentDeck.length) return;
-
+                
                 const cardData = currentDeck[currentCardIndex];
                 if (!cardData.isMultipleChoice) return;
-
-                feedbackContainer.innerHTML = "";
+                
+                feedbackContainer.innerHTML = '';
                 const cardIndex = currentCardIndex;
                 const isMultipleAnswer = cardData.numAnswersToChoose > 1;
                 const inputName = `choice-${cardIndex}`;
-
+                
                 // Get selected answers
                 const selectedInputs = document.querySelectorAll(`input[name="${inputName}"]:checked`);
-
-                // If nothing selected, show a warning
+                
+                // Validation: Check if the correct number of options were selected
+                if (isMultipleAnswer && selectedInputs.length !== cardData.numAnswersToChoose) {
+                    feedbackContainer.innerHTML = '';
+                    const validationMessage = document.createElement('div');
+                    validationMessage.className = 'text-yellow-600 font-semibold mt-2';
+                    validationMessage.textContent = `Please select exactly ${cardData.numAnswersToChoose} answers.`;
+                    feedbackContainer.appendChild(validationMessage);
+                    
+                    // Highlight how many are currently selected
+                    const currentSelectionInfo = document.createElement('div');
+                    currentSelectionInfo.className = 'text-sm text-gray-600 mt-1';
+                    currentSelectionInfo.textContent = `You currently have ${selectedInputs.length} option${selectedInputs.length !== 1 ? 's' : ''} selected.`;
+                    feedbackContainer.appendChild(currentSelectionInfo);
+                    
+                    return; // Stop processing until the user selects the correct number
+                }
+                
+                // If nothing selected at all (for any question type), show a warning
                 if (selectedInputs.length === 0) {
-                    feedbackContainer.textContent = "Please select an answer.";
-                    feedbackContainer.className = "text-yellow-500 font-semibold mt-2";
+                    feedbackContainer.textContent = 'Please select an answer.';
+                    feedbackContainer.className = 'text-yellow-500 font-semibold mt-2';
                     return;
                 }
-
+                
                 // Get correct choices
-                const correctChoices = cardData.choices.filter((choice) => choice.isCorrect);
-
+                const correctChoices = cardData.choices.filter(choice => choice.isCorrect);
+                
                 // Check if answer is correct
                 let isCorrect = false;
-
+                
                 if (isMultipleAnswer) {
                     // For multiple answer questions:
                     // 1. The number of selected answers must match the number of correct answers
                     // 2. All selected answers must be correct
-
-                    // Check if the user selected the correct number of answers
-                    if (selectedInputs.length !== correctChoices.length) {
-                        isCorrect = false;
-                    } else {
-                        // Check if all selected answers are correct
-                        isCorrect = true;
-                        for (const input of selectedInputs) {
-                            const choiceIndex = parseInt(input.dataset.choiceIndex);
-                            if (!cardData.choices[choiceIndex].isCorrect) {
-                                isCorrect = false;
-                                break;
-                            }
+                    
+                    // We already validated that the user selected the correct number of answers
+                    // Now check if all selected answers are correct
+                    isCorrect = true;
+                    for (const input of selectedInputs) {
+                        const choiceIndex = parseInt(input.dataset.choiceIndex);
+                        if (!cardData.choices[choiceIndex].isCorrect) {
+                            isCorrect = false;
+                            break;
                         }
                     }
                 } else {
@@ -1044,78 +1151,67 @@
                     const selectedIndex = parseInt(selectedInputs[0].dataset.choiceIndex);
                     isCorrect = cardData.choices[selectedIndex].isCorrect;
                 }
-
+                
                 // Update quiz stats
                 totalAttempts++;
                 if (isCorrect) {
                     correctAnswers++;
                 }
                 updateQuizStats();
-
+                
                 // Show feedback
                 if (isCorrect) {
-                    feedbackContainer.textContent = "Correct! 🎉";
-                    feedbackContainer.className = "feedback-correct";
-
+                    feedbackContainer.textContent = 'Correct! 🎉';
+                    feedbackContainer.className = 'feedback-correct';
+                    
                     // Move to "Got It" pile if we're in the main deck
-                    if (currentDeckName === "Main Deck") {
+                    if (currentDeckName === 'Main Deck') {
                         gotItPile.push(cardData);
                     }
-
+                    
                     // Show success message
-                    showMessage('Correct! Card added to "Got It" pile.', "success");
-
+                    showMessage('Correct! Card added to "Got It" pile.', 'success');
+                    
                     // Move to next card after a slight delay
                     setTimeout(() => {
                         moveToNextCard();
                     }, 1500);
                 } else {
-                    feedbackContainer.textContent = "Incorrect! Try again or flip to see the answer.";
-                    feedbackContainer.className = "feedback-incorrect";
-
+                    feedbackContainer.textContent = 'Incorrect! Try again or flip to see the answer.';
+                    feedbackContainer.className = 'feedback-incorrect';
+                    
                     // Add the card to "Didn't Get It" pile immediately if we're in the main deck
-                    // ADDED THIS LINE - Add card to pile as soon as we know it's incorrect
                     let cardAlreadyAdded = false;
-                    if (currentDeckName === "Main Deck") {
+                    if (currentDeckName === 'Main Deck') {
                         didntGetItPile.push(cardData);
                         cardAlreadyAdded = true;
-                        showMessage('Card added to "Didn\'t Get It" pile.', "warning");
+                        showMessage('Card added to "Didn\'t Get It" pile.', 'warning');
                     }
-
+                    
                     // Add "Show Answer" and "Move to Next" buttons
-                    const buttonContainer = document.createElement("div");
-                    buttonContainer.className = "flex justify-center gap-2 mt-2";
-
-                    const showAnswerButton = document.createElement("button");
-                    showAnswerButton.className = "bg-gray-500 hover:bg-gray-600 text-white font-medium py-1 px-3 rounded-md text-sm";
-                    showAnswerButton.textContent = "Show Answer";
-                    showAnswerButton.addEventListener("click", () => {
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'flex justify-center gap-2 mt-2';
+                    
+                    const showAnswerButton = document.createElement('button');
+                    showAnswerButton.className = 'bg-gray-500 hover:bg-gray-600 text-white font-medium py-1 px-3 rounded-md text-sm';
+                    showAnswerButton.textContent = 'Show Answer';
+                    showAnswerButton.addEventListener('click', () => {
                         isFlipped = true;
-                        card.classList.add("is-flipped");
-
-                        // REMOVED - Don't add to pile here, already done above
-                        // if (currentDeckName === 'Main Deck') {
-                        //     didntGetItPile.push(cardData);
-                        // }
-
+                        card.classList.add('is-flipped');
+                        
                         // Show message only if we didn't already show it
                         if (!cardAlreadyAdded) {
-                            showMessage("Showing answer...", "info");
+                            showMessage('Showing answer...', 'info');
                         }
                     });
-
-                    const nextCardButton = document.createElement("button");
-                    nextCardButton.className = "bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-3 rounded-md text-sm";
-                    nextCardButton.textContent = "Next Card";
-                    nextCardButton.addEventListener("click", () => {
-                        // REMOVED - Don't add to pile here, already done above
-                        // if (currentDeckName === 'Main Deck') {
-                        //     didntGetItPile.push(cardData);
-                        // }
-
+                    
+                    const nextCardButton = document.createElement('button');
+                    nextCardButton.className = 'bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-3 rounded-md text-sm';
+                    nextCardButton.textContent = 'Next Card';
+                    nextCardButton.addEventListener('click', () => {
                         moveToNextCard();
                     });
-
+                    
                     buttonContainer.appendChild(showAnswerButton);
                     buttonContainer.appendChild(nextCardButton);
                     feedbackContainer.appendChild(buttonContainer);
