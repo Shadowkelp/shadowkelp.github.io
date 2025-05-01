@@ -1,0 +1,30 @@
+Which CAF perspective belongs to Maintaining visibility and control over data Choices: Operations Perspective; Business Perspective; Governance Perspective; Security Perspective,Security Perspective
+Which CAF perspective belongs to Gain actionable insights from infrastructure and application data Choices: Operations Perspective; Platform Perspective; Security Perspective; People Perspective,Operations Perspective
+Which CAF perspective belongs to Strengthen leadership capability and mobilize leaders to drive transformation Choices: People Perspective; Business Perspective; Governance Perspective; Platform Perspective,People Perspective
+Which CAF perspective belongs to Plan-measure and optimize your cloud spend Choices: Governance Perspective; Business Perspective; Operations Perspective; Security Perspective,Governance Perspective
+Which CAF perspective belongs to Guidelines-principles and guardrails for your cloud environment Choices: Platform Perspective; Governance Perspective; Operations Perspective; Security Perspective,Platform Perspective
+Which CAF perspective belongs to Leverage cloud to accelerate your business outcomes Choices: Business Perspective; People Perspective; Governance Perspective; Operations Perspective,Business Perspective
+Which CAF perspective belongs to Quickly restore service operations and minimize adverse business impact Choices: Operations Perspective; Security Perspective; Platform Perspective; Governance Perspective,Operations Perspective
+Which CAF perspective belongs to Develop and communicate security roles and responsibilities Choices: Security Perspective; People Perspective; Governance Perspective; Operations Perspective,Security Perspective
+Which CAF perspective belongs to Build digital acumen to confidently leverage the cloud Choices: People Perspective; Business Perspective; Operations Perspective; Platform Perspective,People Perspective
+Which CAF perspective belongs to Ensure availability of business-critical information-applications and services Choices: Operations Perspective; Security Perspective; Governance Perspective; Platform Perspective,Operations Perspective
+Which CAF perspective belongs to Exercise authority and control over your data to meet stakeholder expectations Choices: Governance Perspective; Security Perspective; Business Perspective; Operations Perspective,Governance Perspective
+Which CAF perspective belongs to Systematically distribute and apply software updates Choices: Operations Perspective; Platform Perspective; Security Perspective; Business Perspective,Operations Perspective
+Which CAF perspective belongs to Validate that systems and services within your workload are protected Choices: Security Perspective; Operations Perspective; Platform Perspective; Governance Perspective,Security Perspective
+Which CAF perspective belongs to Automate and orchestrate data flows throughout your organization Choices: Platform Perspective; Operations Perspective; Business Perspective; Security Perspective,Platform Perspective
+Which CAF perspective that includes Cloud Financial Management Choices: Operations Perspective; Governance Perspective; Business Perspective; Platform Perspective,Governance Perspective
+Which WAF pillar focuses on Perform operations as code and respond to events Choices: Operational Excellence; Security; Reliability; Performance Efficiency,Operational Excellence
+Which WAF pillar focuses on Protect data in transit and at rest Choices: Security; Reliability; Cost Optimization; Operational Excellence,Security
+Which WAF pillar focuses on Automatically recover from failure and test recovery procedures Choices: Reliability; Performance Efficiency; Operational Excellence; Security,Reliability
+Which WAF pillar focuses on Use computing resources efficiently and make trade-offs Choices: Performance Efficiency; Cost Optimization; Reliability; Operational Excellence,Performance Efficiency
+Which WAF pillar focuses on Avoid unnecessary costs and measure overall efficiency Choices: Cost Optimization; Performance Efficiency; Operational Excellence; Security,Cost Optimization
+Which WAF pillar focuses on Minimize environmental impacts and maximize utilization Choices: Sustainability; Security; Reliability; Cost Optimization,Sustainability
+Which WAF pillar includes implementing strong identity foundation and enabling traceability Choices: Security; Operational Excellence; Cost Optimization; Performance Efficiency,Security
+Which WAF pillar focuses on Stop guessing capacity and scale horizontally Choices: Reliability; Performance Efficiency; Cost Optimization; Operational Excellence,Reliability
+Which WAF pillar includes Democratize advanced technologies and go global in minutes Choices: Performance Efficiency; Operational Excellence; Security; Reliability,Performance Efficiency
+Which WAF pillar includes Adopt a consumption model and stop spending on undifferentiated activities Choices: Cost Optimization; Performance Efficiency; Sustainability; Security,Cost Optimization
+Which WAF pillar emphasizes Anticipate and adopt new efficient hardware and use managed services Choices: Sustainability; Performance Efficiency; Cost Optimization; Operational Excellence,Sustainability
+Which WAF pillar focuses on Making frequent-small-reversible changes Choices: Operational Excellence; Reliability; Performance Efficiency; Security,Operational Excellence
+Which WAF pillar includes Prepare for security events and keep people away from data Choices: Security; Reliability; Cost Optimization; Operational Excellence,Security
+Which WAF pillar focuses on Use serverless architectures and experiment more often Choices: Performance Efficiency; Operational Excellence; Reliability; Security,Performance Efficiency
+Which WAF pillar includes Implement cloud financial management and analyze expenditure Choices: Cost Optimization; Sustainability; Security; Performance Efficiency,Cost Optimization
