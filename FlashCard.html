@@ -55,6 +55,8 @@
             .card-container {
                 perspective: 1000px; /* Provides depth for the 3D effect */
                 min-height: 200px; /* Ensure container has height even when card is empty */
+                transition: min-height 0.3s ease; /* Smooth transition when header collapses */
+                flex-grow: 1; /* Allow the card container to fill available space */
             }
 
             .card {
@@ -85,8 +87,8 @@
 				border-radius: 0.5rem; /* rounded-lg */
 				box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
 				text-align: center;
-				font-size: 1.125rem; /* text-lg */
-				line-height: 1.75rem;
+				font-size: 0.9375rem; /* MODIFIED: Smaller text size (between text-sm and text-base) */
+				line-height: 1.5rem; /* MODIFIED: Adjusted line height */
 				overflow-wrap: break-word; /* Break long words */
 				word-wrap: break-word; /* Legacy */
 				hyphens: auto; /* Add hyphens if needed */
@@ -228,29 +230,98 @@
 				transition: max-width 0.3s ease;
 			}
 			
+            /* ADDED: Styles for collapsible header */
+            .top-section {
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+                flex-shrink: 0;
+            }
+            
+            .top-section.collapsed {
+                max-height: 0;
+                margin: 0;
+                padding: 0;
+                border: none;
+                flex-basis: 0;
+            }
+            
+            .toggle-button {
+                border: none;
+                background: none;
+                cursor: pointer;
+                color: #4f46e5;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+                margin: 0 auto;
+                border-radius: 0.25rem;
+                transition: background-color 0.2s;
+            }
+            
+            .toggle-button:hover {
+                background-color: #EEF2FF;
+            }
+            
+            .toggle-button svg {
+                width: 18px;
+                height: 18px;
+                margin-right: 4px;
+                transition: transform 0.3s ease;
+            }
+            
+            .toggle-button.collapsed svg {
+                transform: rotate(180deg);
+            }
+            
+            .app-title-section {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 1rem;
+            }
+            
+            .app-title-container {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
         </style>
     </head>
-    <body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-4">
-        <div class="w-full max-w-md bg-white p-6 rounded-lg shadow-lg responsive-container">
-            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Flashcard App</h1>
-
-            <div class="mb-4 text-center">
-                <label for="fileInput" class="custom-file-upload hover:bg-gray-100">
-                    Load Cards from File
-                </label>
-                <input type="file" id="fileInput" accept=".txt,.csv" />
-                <p class="text-xs text-gray-500 mt-1">Use .txt or .csv file. Format: Front Text,Back Text (one per line)</p>
-                <p id="fileName" class="text-sm text-gray-600 mt-1"></p>
+    <body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-4" style="height: 100vh;">
+        <div class="w-full max-w-md bg-white p-6 rounded-lg shadow-lg responsive-container flex flex-col min-h-[650px]">
+            <!-- MODIFIED: App title with collapsible toggle -->
+            <div class="app-title-section">
+                <h1 class="text-2xl font-bold text-center text-gray-800">Flashcard App</h1>
+                <button id="toggleHeaderButton" class="toggle-button ml-2" aria-label="Toggle header">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    <span id="toggleText">Hide Options</span>
+                </button>
             </div>
-			<div class="mb-4 text-center">
-				<div class="flex flex-col items-center">
-					<label for="fileSelector" class="text-sm text-gray-700 mb-2">Or select a file:</label>
-					<select id="fileSelector" class="bg-white border border-gray-300 rounded-md py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:border-blue-500 w-full max-w-xs">
-						<option value="">-- Select a file --</option>
-						<!-- File options will be populated here -->
-					</select>
-				</div>
-			</div>
+
+            <!-- ADDED: Collapsible top section -->
+            <div id="topSection" class="top-section">
+                <div class="mb-4 text-center">
+                    <label for="fileInput" class="custom-file-upload hover:bg-gray-100">
+                        Load Cards from File
+                    </label>
+                    <input type="file" id="fileInput" accept=".txt,.csv" />
+                    <p class="text-xs text-gray-500 mt-1">Use .txt or .csv file. Format: Front Text,Back Text (one per line)</p>
+                    <p id="fileName" class="text-sm text-gray-600 mt-1"></p>
+                </div>
+                <div class="mb-4 text-center">
+                    <div class="flex flex-col items-center">
+                        <label for="fileSelector" class="text-sm text-gray-700 mb-2">Or select a file:</label>
+                        <select id="fileSelector" class="bg-white border border-gray-300 rounded-md py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:border-blue-500 w-full max-w-xs">
+                            <option value="">-- Select a file --</option>
+                            <!-- File options will be populated here -->
+                        </select>
+                    </div>
+                </div>
+            </div>
 
             <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
                 <button id="shuffleButton" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">Shuffle</button>
@@ -265,8 +336,8 @@
                 <div id="quizScore" class="text-sm text-gray-700 hidden">Score: <span id="correctAnswers">0</span>/<span id="totalAttempts">0</span></div>
             </div>
 
-            <div class="card-container mb-6 h-64 sm:h-80 md:h-96" id="cardContainer">
-                <div class="card" id="card">
+            <div class="card-container mb-6 h-64 sm:h-80 md:h-96 flex-grow" id="cardContainer">
+                <div class="card h-full" id="card">
                     <div class="card-face card-front" id="cardFront">Load a file to start!</div>
                     <div class="card-face card-back" id="cardBack"></div>
                 </div>
@@ -325,6 +396,11 @@
             const quizSubmitContainer = document.getElementById("quizSubmitContainer");
             const feedbackContainer = document.getElementById("feedback-container");
 
+            // ADDED: DOM Elements for collapsible header
+            const toggleHeaderButton = document.getElementById("toggleHeaderButton");
+            const topSection = document.getElementById("topSection");
+            const toggleText = document.getElementById("toggleText");
+
             // App State
             let mainDeck = []; // Array to hold all cards { front: '...', back: '...', isMultipleChoice: false, choices: [] }
             let gotItPile = [];
@@ -336,11 +412,34 @@
             let quizMode = false; // Whether the app is in quiz mode
             let correctAnswers = 0; // Number of correct answers in quiz mode
             let totalAttempts = 0; // Total number of attempts in quiz mode
+            let isHeaderCollapsed = false; // ADDED: Track header state
 
             // --- Initialization ---
             updateUI(); // Initial UI setup
 
             // --- Event Listeners ---
+
+            // ADDED: Toggle header collapsibility
+            toggleHeaderButton.addEventListener("click", () => {
+                isHeaderCollapsed = !isHeaderCollapsed;
+                topSection.classList.toggle("collapsed", isHeaderCollapsed);
+                toggleHeaderButton.classList.toggle("collapsed", isHeaderCollapsed);
+                
+                if (isHeaderCollapsed) {
+                    toggleText.textContent = "Show Options";
+                    // Expand card container when header is collapsed
+                    cardContainer.style.minHeight = "400px"; // Significantly increase card size when header is collapsed
+                    cardContainer.style.flex = "1";
+                } else {
+                    toggleText.textContent = "Hide Options";
+                    // Return to default size
+                    cardContainer.style.minHeight = "200px";
+                    cardContainer.style.flex = "0 0 auto";
+                }
+                
+                // Force a reflow to ensure the layout updates
+                void cardContainer.offsetHeight;
+            });
 
             // File Input
             fileInput.addEventListener("change", handleFileSelect);
@@ -356,6 +455,7 @@
 			
 			// List of available files (add your files here)
 			const availableFiles = [
+				{ name: "AWS Certified Solutions Architect Associate 1", filename: "aws_saa_1.txt" },
 				{ name: "AWS Cloud Practitioner 1 - General", filename: "aws_cloud_practitioner_1.txt" },
 				{ name: "AWS Cloud Practitioner 2 - General", filename: "aws_cloud_practitioner_2.txt" },
 				{ name: "AWS Cloud Practitioner 3 - General", filename: "aws_cloud_practitioner_3.txt" },
@@ -417,6 +517,13 @@
 					
 					// Reset the file input to avoid confusion
 					fileInput.value = '';
+					
+					// ADDED: Auto-collapse the header after loading a file
+                    if (!isHeaderCollapsed) {
+                        setTimeout(() => {
+                            toggleHeaderButton.click();
+                        }, 300); // Add a short delay for better visual transition
+                    }
 					
 				} catch (error) {
 					console.error('Error loading file:', error);
@@ -562,6 +669,13 @@
                     didntGetItPile = [];
                     loadDeck(mainDeck, "Main Deck"); // Load the new main deck
                     showMessage(`Loaded ${mainDeck.length} cards.`);
+                    
+                    // ADDED: Auto-collapse the header after loading a file
+                    if (!isHeaderCollapsed) {
+                        setTimeout(() => {
+                            toggleHeaderButton.click();
+                        }, 300); // Add a short delay for better visual transition
+                    }
                 };
 
                 reader.onerror = () => {
