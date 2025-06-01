@@ -1,7 +1,7 @@
 // Geosassin v2 - client.js
 
 // Establish connection to the server
-const socket = io('https://geossassin.onrender.com');
+const socket = io('https://geosassin.onrender.com');
 
 // Canvas and rendering context
 const canvas = document.getElementById('gameCanvas');
