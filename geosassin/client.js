@@ -1,7 +1,26 @@
 // Geosassin v2 - client.js
 
 // Establish connection to the server
-const socket = io('https://geosassin.onrender.com');
+const socket = io('https://geosassin.onrender.com', {
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  timeout: 10000,
+  transports: ['websocket', 'polling']
+});
+
+// Add connection error handling
+socket.on('connect_error', (error) => {
+  console.error('Connection error:', error);
+  messageDisplay.textContent = "Server connection error. Please try again later.";
+  messageDisplay.style.display = 'block';
+  messageDisplay.style.color = '#FF6347'; // Red
+});
+
+socket.on('connect_timeout', () => {
+  console.error('Connection timeout');
+  messageDisplay.textContent = "Server connection timeout. Please try again later.";
+  messageDisplay.style.display = 'block';
+});
 
 // Canvas and rendering context
 const canvas = document.getElementById('gameCanvas');
