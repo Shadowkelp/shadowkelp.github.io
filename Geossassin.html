@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geosassin v2</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #1a1a1a; /* Dark background for the page */
+            font-family: Arial, sans-serif;
+            color: #fff;
+        }
+        #gameContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 2px solid #909090; /* Major grid line color for container border */
+            box-shadow: 0 0 15px rgba(144, 144, 144, 0.5);
+            padding: 10px;
+            background-color: #000; /* Canvas background color */
+        }
+        canvas {
+            border: 1px solid #505050; /* Minor grid line color for canvas border */
+            display: block; /* Prevents extra space below canvas */
+        }
+        #uiContainer {
+            display: flex;
+            justify-content: space-between;
+            width: 1200px; /* Same as canvas width */
+            margin-top: 10px;
+            padding: 0 10px; /* Align with canvas padding if any */
+        }
+        #cooldownsDisplay {
+            font-size: 16px;
+            color: white;
+            text-align: left;
+            min-width: 250px; /* Ensure enough space for cooldowns */
+        }
+        #cooldownsDisplay div {
+            margin-bottom: 5px;
+        }
+        #messageDisplay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            font-weight: bold;
+            color: yellow; /* Default message color */
+            text-shadow: 2px 2px 4px #000;
+            z-index: 100; /* Ensure it's on top */
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+        #playerIdDisplay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 14px;
+            color: #ccc;
+        }
+        #instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            border: 1px solid #444;
+            max-width: 1200px;
+            text-align: left;
+        }
+        #instructions h3 {
+            margin-top: 0;
+            color: #ffa500; /* Orange for heading */
+        }
+        #instructions ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        #instructions li {
+            margin-bottom: 8px;
+        }
+        #instructions code {
+            background-color: #333;
+            color: #lightgreen;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="playerIdDisplay">Connecting...</div>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="uiContainer">
+            <div id="cooldownsDisplay">
+                </div>
+        </div>
+    </div>
+    <div id="messageDisplay"></div>
+
+    <div id="instructions">
+        <h3>Controls & Abilities</h3>
+        <ul>
+            <li><strong>Movement:</strong> <code>UP_ARROW</code>, <code>DOWN_ARROW</code>, <code>LEFT_ARROW</code>, <code>RIGHT_ARROW</code></li>
+            <li><strong>Charge:</strong> <code>KEY_1</code></li>
+            <li><strong>Ambush:</strong> <code>KEY_2</code></li>
+            <li><strong>Root:</strong> <code>KEY_3</code> (Target enemy in front)</li>
+            <li><strong>Stun:</strong> <code>KEY_4</code> (Target enemy in front)</li>
+            <li><strong>Assassinate:</strong> <code>SPACE_BAR</code> (Target enemy in front - WIN CONDITION)</li>
+            <li><strong>Reset Round:</strong> <code>KEY_R</code></li>
+        </ul>
+        <p><strong>Objective:</strong> Successfully use 'Assassinate' on the other player.</p>
+    </div>
+
+    <script src="client.js"></script>
+</body>
+</html>
