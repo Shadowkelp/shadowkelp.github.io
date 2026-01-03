@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sufjan Stevens Discography Ranker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FDF8F3',
+                        sage: '#A8B5A0',
+                        dustyrose: '#D4A5A5',
+                        warmgray: '#9B8F8F',
+                        softblue: '#A5B9C4',
+                        goldenrod: '#DAB77A',
+                        forest: '#5D6E5A',
+                        blush: '#E8D5D5',
+                    },
+                    fontFamily: {
+                        'serif': ['Cormorant Garamond', 'serif'],
+                        'sans': ['Nunito', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #FDF8F3 0%, #E8D5D5 50%, #A5B9C4 100%);
+            min-height: 100vh;
+        }
+        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15); }
+        .card-hover:active { transform: scale(0.98); }
+        .album-gradient-1 { background: linear-gradient(135deg, #E8D5C4 0%, #C9B8A5 100%); }
+        .album-gradient-2 { background: linear-gradient(135deg, #7A8B7A 0%, #5A6B5A 100%); }
+        .album-gradient-3 { background: linear-gradient(135deg, #8B9B8B 0%, #6B7B6B 100%); }
+        .album-gradient-4 { background: linear-gradient(135deg, #C4B5A0 0%, #A59580 100%); }
+        .album-gradient-5 { background: linear-gradient(135deg, #A8B5A0 0%, #8A9B8A 100%); }
+        .album-gradient-6 { background: linear-gradient(135deg, #8B7B6B 0%, #6B5B4B 100%); }
+        .album-gradient-7 { background: linear-gradient(135deg, #9B8B9B 0%, #7B6B7B 100%); }
+        .album-gradient-8 { background: linear-gradient(135deg, #D4A5A5 0%, #B48585 100%); }
+        .album-gradient-9 { background: linear-gradient(135deg, #A5B9C4 0%, #859AA5 100%); }
+        .album-gradient-10 { background: linear-gradient(135deg, #DAB77A 0%, #BA975A 100%); }
+        .album-gradient-11 { background: linear-gradient(135deg, #4A5A6A 0%, #3A4A5A 100%); }
+        .album-gradient-12 { background: linear-gradient(135deg, #6B8B8B 0%, #4B6B6B 100%); }
+        .album-gradient-13 { background: linear-gradient(135deg, #C9A090 0%, #A98070 100%); }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .progress-bar { transition: width 0.5s ease-out; }
+        .leaderboard-item { transition: all 0.3s ease; }
+        .modal-backdrop { backdrop-filter: blur(8px); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(168, 181, 160, 0.5); border-radius: 3px; }
+    </style>
+</head>
+<body class="font-sans text-warmgray overflow-x-hidden">
+    <!-- Username Modal -->
+    <div id="usernameModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 modal-backdrop">
+        <div class="bg-cream rounded-2xl p-8 mx-4 max-w-md w-full shadow-2xl fade-in">
+            <div class="text-center mb-6">
+                <i class="fas fa-record-vinyl text-5xl text-sage mb-4"></i>
+                <h1 class="font-serif text-3xl text-forest mb-2">Sufjan Stevens</h1>
+                <p class="font-serif text-xl text-dustyrose italic">Discography Ranker</p>
+            </div>
+            <p class="text-center text-warmgray mb-6 text-sm">Rank your favorite Sufjan tracks through head-to-head matchups. Your progress is saved locally.</p>
+            <div class="space-y-4">
+                <input type="text" id="usernameInput" placeholder="Enter your name..." class="w-full px-4 py-3 rounded-xl border-2 border-sage/30 bg-white/50 focus:border-sage focus:outline-none transition-colors text-forest placeholder:text-warmgray/50" maxlength="30">
+                <button id="startButton" class="w-full py-3 bg-sage text-white rounded-xl font-semibold hover:bg-forest transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled><i class="fas fa-play mr-2"></i>Begin Ranking</button>
+            </div>
+            <p class="text-center text-xs text-warmgray/60 mt-4"><i class="fas fa-info-circle mr-1"></i>Data is stored in your browser</p>
+        </div>
+    </div>
+    <!-- Main App -->
+    <div id="mainApp" class="hidden min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-cream/80 backdrop-blur-sm shadow-sm sticky top-0 z-40">
+            <div class="max-w-4xl mx-auto px-4 py-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-record-vinyl text-2xl text-sage"></i>
+                        <div>
+                            <h1 class="font-serif text-lg text-forest leading-tight">Sufjan Ranker</h1>
+                            <p id="welcomeUser" class="text-xs text-warmgray"></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="importBtn" class="p-2 text-warmgray hover:text-forest transition-colors" title="Import Data"><i class="fas fa-upload"></i></button>
+                        <button id="exportBtn" class="p-2 text-warmgray hover:text-forest transition-colors" title="Export Data"><i class="fas fa-download"></i></button>
+                        <button id="resetBtn" class="p-2 text-warmgray hover:text-dustyrose transition-colors" title="Reset Progress"><i class="fas fa-redo"></i></button>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="flex justify-between text-xs text-warmgray mb-1">
+                        <span id="progressText">Progress: 0%</span>
+                        <span id="matchCount">0 matches</span>
+                    </div>
+                    <div class="h-2 bg-white/50 rounded-full overflow-hidden">
+                        <div id="progressBar" class="h-full bg-gradient-to-r from-sage to-forest progress-bar rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- Arena -->
+        <main class="flex-1 max-w-4xl mx-auto w-full px-4 py-6">
+            <div id="completionMessage" class="hidden mb-6 p-4 bg-goldenrod/20 border border-goldenrod/40 rounded-xl text-center fade-in">
+                <i class="fas fa-trophy text-goldenrod text-2xl mb-2"></i>
+                <p class="text-forest font-semibold">Ranking Complete!</p>
+                <p class="text-sm text-warmgray">All songs have been compared at least 5 times. View your final rankings below!</p>
+            </div>
+            <div id="battleArena" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div id="card1" class="card-hover cursor-pointer bg-white/70 backdrop-blur rounded-2xl overflow-hidden shadow-lg border border-white/50">
+                    <div id="art1" class="h-32 md:h-40 album-gradient-1 flex items-center justify-center"><i class="fas fa-music text-white/30 text-4xl"></i></div>
+                    <div class="p-4">
+                        <h3 id="title1" class="font-serif text-xl text-forest font-semibold line-clamp-2">Song Title</h3>
+                        <p id="album1" class="text-sm text-warmgray mt-1 line-clamp-1"><i class="fas fa-compact-disc mr-1 text-dustyrose"></i>Album Name</p>
+                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-sage/20">
+                            <span id="rating1" class="text-xs text-warmgray"><i class="fas fa-chart-line mr-1"></i>1200</span>
+                            <span id="matches1" class="text-xs text-warmgray"><i class="fas fa-gamepad mr-1"></i>0 matches</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-center md:hidden"><span class="bg-dustyrose/20 text-dustyrose font-serif italic px-4 py-1 rounded-full text-sm">vs</span></div>
+                <div id="card2" class="card-hover cursor-pointer bg-white/70 backdrop-blur rounded-2xl overflow-hidden shadow-lg border border-white/50">
+                    <div id="art2" class="h-32 md:h-40 album-gradient-2 flex items-center justify-center"><i class="fas fa-music text-white/30 text-4xl"></i></div>
+                    <div class="p-4">
+                        <h3 id="title2" class="font-serif text-xl text-forest font-semibold line-clamp-2">Song Title</h3>
+                        <p id="album2" class="text-sm text-warmgray mt-1 line-clamp-1"><i class="fas fa-compact-disc mr-1 text-dustyrose"></i>Album Name</p>
+                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-sage/20">
+                            <span id="rating2" class="text-xs text-warmgray"><i class="fas fa-chart-line mr-1"></i>1200</span>
+                            <span id="matches2" class="text-xs text-warmgray"><i class="fas fa-gamepad mr-1"></i>0 matches</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mb-8">
+                <button id="skipBtn" class="px-6 py-2 text-warmgray hover:text-forest border border-warmgray/30 hover:border-sage rounded-full transition-all text-sm"><i class="fas fa-forward mr-2"></i>Skip (haven't heard these)</button>
+            </div>
+            <section class="bg-white/60 backdrop-blur rounded-2xl shadow-lg border border-white/50 overflow-hidden">
+                <div class="p-4 border-b border-sage/20 flex items-center justify-between">
+                    <h2 class="font-serif text-xl text-forest"><i class="fas fa-crown text-goldenrod mr-2"></i>Leaderboard</h2>
+                    <button id="toggleFullList" class="text-sm text-sage hover:text-forest transition-colors"><span id="toggleText">View All</span><i id="toggleIcon" class="fas fa-chevron-down ml-1"></i></button>
+                </div>
+                <div id="leaderboardContainer" class="max-h-80 overflow-y-auto">
+                    <table class="w-full">
+                        <thead class="bg-sage/10 sticky top-0">
+                            <tr class="text-xs text-warmgray uppercase tracking-wider">
+                                <th class="py-2 px-4 text-left w-12">#</th>
+                                <th class="py-2 px-4 text-left">Song</th>
+                                <th class="py-2 px-4 text-right w-20">Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+        <footer class="bg-cream/50 backdrop-blur-sm py-4 text-center text-xs text-warmgray"><p>Made with <i class="fas fa-heart text-dustyrose"></i> for Sufjan fans everywhere</p></footer>
+    </div>
+    <!-- Export Modal -->
+    <div id="exportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 modal-backdrop">
+        <div class="bg-cream rounded-2xl p-6 mx-4 max-w-md w-full shadow-2xl fade-in">
+            <h2 class="font-serif text-2xl text-forest mb-4 text-center"><i class="fas fa-download mr-2 text-sage"></i>Export Rankings</h2>
+            <div class="space-y-3">
+                <button id="exportJSON" class="w-full py-3 bg-sage text-white rounded-xl hover:bg-forest transition-colors"><i class="fas fa-file-code mr-2"></i>Download as JSON</button>
+                <button id="exportCSV" class="w-full py-3 bg-softblue text-white rounded-xl hover:bg-softblue/80 transition-colors"><i class="fas fa-file-csv mr-2"></i>Download as CSV</button>
+                <button id="closeExport" class="w-full py-3 border border-warmgray/30 text-warmgray rounded-xl hover:bg-white/50 transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <!-- Reset Modal -->
+    <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 modal-backdrop">
+        <div class="bg-cream rounded-2xl p-6 mx-4 max-w-md w-full shadow-2xl fade-in">
+            <h2 class="font-serif text-2xl text-forest mb-2 text-center"><i class="fas fa-exclamation-triangle mr-2 text-goldenrod"></i>Reset Progress?</h2>
+            <p class="text-center text-warmgray mb-6 text-sm">This will erase all your rankings and start fresh. This action cannot be undone.</p>
+            <div class="space-y-3">
+                <button id="confirmReset" class="w-full py-3 bg-dustyrose text-white rounded-xl hover:bg-dustyrose/80 transition-colors"><i class="fas fa-trash mr-2"></i>Yes, Reset Everything</button>
+                <button id="cancelReset" class="w-full py-3 border border-warmgray/30 text-warmgray rounded-xl hover:bg-white/50 transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <!-- Import Modal -->
+    <div id="importModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 modal-backdrop">
+        <div class="bg-cream rounded-2xl p-6 mx-4 max-w-md w-full shadow-2xl fade-in">
+            <h2 class="font-serif text-2xl text-forest mb-4 text-center"><i class="fas fa-upload mr-2 text-sage"></i>Import Rankings</h2>
+            <p class="text-center text-warmgray mb-4 text-sm">Upload a previously exported JSON file to restore your rankings.</p>
+            <div class="space-y-3">
+                <label class="block w-full py-8 border-2 border-dashed border-sage/50 rounded-xl hover:border-sage hover:bg-sage/5 transition-colors cursor-pointer text-center">
+                    <i class="fas fa-file-upload text-2xl text-sage mb-2"></i>
+                    <p class="text-sm text-warmgray">Click to select JSON file</p>
+                    <input type="file" id="importFileInput" accept=".json" class="hidden">
+                </label>
+                <div id="importStatus" class="hidden text-center text-sm py-2 rounded-lg"></div>
+                <button id="closeImport" class="w-full py-3 border border-warmgray/30 text-warmgray rounded-xl hover:bg-white/50 transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DISCOGRAPHY = [
+            // A Sun Came (2000) - 21 tracks
+            { id: 1, title: "We Are What You Say", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 2, title: "A Winner Needs a Wand", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 3, title: "Rake", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 4, title: "Siamese Twins", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 5, title: "Demetrius", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 6, title: "Dumb I Sound", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 7, title: "Wordsworth's Ridge", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 8, title: "Belly Button", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 9, title: "Rice Pudding", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 10, title: "A Loverless Bed (Without Remission)", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 11, title: "Godzuki", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 12, title: "Super Sexy Woman", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 13, title: "The Oracle Said Wander", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 14, title: "Happy Birthday", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 15, title: "Jason", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 16, title: "Kill", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 17, title: "Ya Leil", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 18, title: "A Sun Came", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 19, title: "Satan's Saxophones", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 20, title: "Joy! Joy! Joy!", album: "A Sun Came", year: 2000, albumId: 1 },
+            { id: 21, title: "You Are the Rake", album: "A Sun Came", year: 2000, albumId: 1 },
+            // Enjoy Your Rabbit (2001) - 14 tracks
+            { id: 22, title: "Year of the Asthmatic Cat", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 23, title: "Year of the Monkey", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 24, title: "Year of the Rat", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 25, title: "Year of the Ox", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 26, title: "Year of the Boar", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 27, title: "Year of the Tiger", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 28, title: "Year of the Snake", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 29, title: "Year of the Sheep", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 30, title: "Year of the Rooster", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 31, title: "Year of the Dragon", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 32, title: "Enjoy Your Rabbit", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 33, title: "Year of the Dog", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 34, title: "Year of the Horse", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            { id: 35, title: "Year of Our Lord", album: "Enjoy Your Rabbit", year: 2001, albumId: 2 },
+            // Michigan (2003) - 15 tracks
+            { id: 36, title: "Flint (For the Unemployed and Underpaid)", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 37, title: "All Good Naysayers, Speak Up! Or Forever Hold Your Peace!", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 38, title: "For the Widows in Paradise, For the Fatherless in Ypsilanti", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 39, title: "Say Yes! to M!ch!gan!", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 40, title: "The Upper Peninsula", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 41, title: "Tahquamenon Falls", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 42, title: "Holland", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 43, title: "Detroit, Lift Up Your Weary Head! (Rebuild! Restore! Reconsider!)", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 44, title: "Romulus", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 45, title: "Alanson, Crooked River", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 46, title: "Sleeping Bear, Sault Saint Marie", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 47, title: "They Also Mourn Who Do Not Wear Black (For the Homeless in Muskegon)", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 48, title: "Oh God, Where Are You Now?", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 49, title: "Redford (For Yia-Yia & Pappou)", album: "Michigan", year: 2003, albumId: 3 },
+            { id: 50, title: "Vito's Ordination Song", album: "Michigan", year: 2003, albumId: 3 },
+            // Seven Swans (2004) - 12 tracks
+            { id: 51, title: "All the Trees of the Field Will Clap Their Hands", album: "Seven Swans", year: 2004, albumId: 4 },
+            { id: 52, title: "The Dress Looks Nice on You", album: "Seven Swans", year: 2004, albumId: 4 },
+            { id: 53, title: "In the Devil's Territory", album: "Seven Swans", year: 2004, albumId: 4 },
+            { id: 54, title: "To Be Alone with You", album: "Seven Swans", year: 2004, albumId: 4 },
+            { id: 55, title: "Abraham", album: "Seven Swans", year: 2004, albumId: 4 },
+            { id: 56, title: "Sister", album: "Seven Swans", year: 2004, albumId: 4 },
+            { id: 57, title: "Size Too Small", album: "Seven Swans", year: 2004, albumId: 4 },
+            { id: 58, title: "We Won't Need Legs to Stand", album: "Seven Swans", year: 2004, albumId: 4 },
+            { id: 59, title: "A Good Man Is Hard to Find", album: "Seven Swans", year: 2004, albumId: 4 },
+            { id: 60, title: "He Woke Me Up Again", album: "Seven Swans", year: 2004, albumId: 4 },
+            { id: 61, title: "Seven Swans", album: "Seven Swans", year: 2004, albumId: 4 },
+            { id: 62, title: "The Transfiguration", album: "Seven Swans", year: 2004, albumId: 4 },
+            // Illinois (2005) - 22 tracks
+            { id: 63, title: "Concerning the UFO Sighting Near Highland, Illinois", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 64, title: "The Black Hawk War", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 65, title: "Come On! Feel the Illinoise!", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 66, title: "John Wayne Gacy, Jr.", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 67, title: "Jacksonville", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 68, title: "A Short Reprise for Mary Todd, Who Went Insane, but for Very Good Reasons", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 69, title: "Decatur, or, Round of Applause for Your Stepmother!", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 70, title: "One Last 'Whoo-Hoo!' for the Pullman", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 71, title: "Chicago", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 72, title: "Casimir Pulaski Day", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 73, title: "To the Workers of the Rock River Valley Region", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 74, title: "The Man of Metropolis Steals Our Hearts", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 75, title: "Prairie Fire That Wanders About", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 76, title: "A Conjunction of Drones Simulating the Way in Which Sufjan Stevens Has an Existential Crisis", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 77, title: "The Predatory Wasp of the Palisades Is Out to Get Us!", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 78, title: "They Are Night Zombies!! They Are Neighbors!!", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 79, title: "Let's Hear That String Part Again", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 80, title: "In This Temple As in the Hearts of Man for Whom He Saved the Earth", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 81, title: "The Seer's Tower", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 82, title: "The Tallest Man, the Broadest Shoulders", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 83, title: "Riffs and Variations on a Single Note", album: "Illinois", year: 2005, albumId: 5 },
+            { id: 84, title: "Out of Egypt, into the Great Laugh of Mankind", album: "Illinois", year: 2005, albumId: 5 },
+            // The Avalanche (2006) - 21 tracks
+            { id: 85, title: "The Avalanche", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 86, title: "Dear Mr. Supercomputer", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 87, title: "Adlai Stevenson", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 88, title: "The Vivian Girls Are Visited in the Night by Saint Dargarius", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 89, title: "Chicago (Acoustic Version)", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 90, title: "The Henney Buggy Band", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 91, title: "Saul Bellow", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 92, title: "Carlyle Lake", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 93, title: "Springfield, or Bobby Got a Shadfly Caught in His Hair", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 94, title: "The Mistress Witch from McClure", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 95, title: "Kaskaskia River", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 96, title: "Chicago (Adult Contemporary Easy Listening Version)", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 97, title: "Inaugural Pop Music for Jane Margaret Byrne", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 98, title: "No Man's Land", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 99, title: "The Palm Sunday Tornado Hits Crystal Lake", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 100, title: "The Pick-Up", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 101, title: "The Perpetual Self, or 'What Would Saul Alinsky Do?'", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 102, title: "For Clyde Tombaugh", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 103, title: "Chicago (Multiple Personality Disorder Version)", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 104, title: "Pittsfield", album: "The Avalanche", year: 2006, albumId: 6 },
+            { id: 105, title: "The Undivided Self (for Eppie and Popo)", album: "The Avalanche", year: 2006, albumId: 6 },
+            // All Delighted People (2010) - 8 tracks
+            { id: 106, title: "All Delighted People (Original Version)", album: "All Delighted People", year: 2010, albumId: 7 },
+            { id: 107, title: "Enchanting Ghost", album: "All Delighted People", year: 2010, albumId: 7 },
+            { id: 108, title: "Heirloom", album: "All Delighted People", year: 2010, albumId: 7 },
+            { id: 109, title: "From the Mouth of Gabriel", album: "All Delighted People", year: 2010, albumId: 7 },
+            { id: 110, title: "The Owl and the Tanager", album: "All Delighted People", year: 2010, albumId: 7 },
+            { id: 111, title: "All Delighted People (Classic Rock Version)", album: "All Delighted People", year: 2010, albumId: 7 },
+            { id: 112, title: "Arnika", album: "All Delighted People", year: 2010, albumId: 7 },
+            { id: 113, title: "Djohariah", album: "All Delighted People", year: 2010, albumId: 7 },
+            // The Age of Adz (2010) - 11 tracks
+            { id: 114, title: "Futile Devices", album: "The Age of Adz", year: 2010, albumId: 8 },
+            { id: 115, title: "Too Much", album: "The Age of Adz", year: 2010, albumId: 8 },
+            { id: 116, title: "Age of Adz", album: "The Age of Adz", year: 2010, albumId: 8 },
+            { id: 117, title: "I Walked", album: "The Age of Adz", year: 2010, albumId: 8 },
+            { id: 118, title: "Now That I'm Older", album: "The Age of Adz", year: 2010, albumId: 8 },
+            { id: 119, title: "Get Real Get Right", album: "The Age of Adz", year: 2010, albumId: 8 },
+            { id: 120, title: "Bad Communication", album: "The Age of Adz", year: 2010, albumId: 8 },
+            { id: 121, title: "Vesuvius", album: "The Age of Adz", year: 2010, albumId: 8 },
+            { id: 122, title: "All for Myself", album: "The Age of Adz", year: 2010, albumId: 8 },
+            { id: 123, title: "I Want to Be Well", album: "The Age of Adz", year: 2010, albumId: 8 },
+            { id: 124, title: "Impossible Soul", album: "The Age of Adz", year: 2010, albumId: 8 },
+            // Carrie & Lowell (2015) - 11 tracks
+            { id: 125, title: "Death with Dignity", album: "Carrie & Lowell", year: 2015, albumId: 9 },
+            { id: 126, title: "Should Have Known Better", album: "Carrie & Lowell", year: 2015, albumId: 9 },
+            { id: 127, title: "All of Me Wants All of You", album: "Carrie & Lowell", year: 2015, albumId: 9 },
+            { id: 128, title: "Drawn to the Blood", album: "Carrie & Lowell", year: 2015, albumId: 9 },
+            { id: 129, title: "Eugene", album: "Carrie & Lowell", year: 2015, albumId: 9 },
+            { id: 130, title: "Fourth of July", album: "Carrie & Lowell", year: 2015, albumId: 9 },
+            { id: 131, title: "The Only Thing", album: "Carrie & Lowell", year: 2015, albumId: 9 },
+            { id: 132, title: "Carrie & Lowell", album: "Carrie & Lowell", year: 2015, albumId: 9 },
+            { id: 133, title: "John My Beloved", album: "Carrie & Lowell", year: 2015, albumId: 9 },
+            { id: 134, title: "No Shade in the Shadow of the Cross", album: "Carrie & Lowell", year: 2015, albumId: 9 },
+            { id: 135, title: "Blue Bucket of Gold", album: "Carrie & Lowell", year: 2015, albumId: 9 },
+            // The Greatest Gift (2017) - 12 tracks
+            { id: 136, title: "Wallowa Lake Monster", album: "The Greatest Gift", year: 2017, albumId: 10 },
+            { id: 137, title: "Drawn to the Blood (Sufjan Stevens Remix)", album: "The Greatest Gift", year: 2017, albumId: 10 },
+            { id: 138, title: "Death with Dignity (Helado Negro Remix)", album: "The Greatest Gift", year: 2017, albumId: 10 },
+            { id: 139, title: "John My Beloved (iPhone Demo)", album: "The Greatest Gift", year: 2017, albumId: 10 },
+            { id: 140, title: "Drawn to the Blood (Fingerpicking Remix)", album: "The Greatest Gift", year: 2017, albumId: 10 },
+            { id: 141, title: "The Greatest Gift", album: "The Greatest Gift", year: 2017, albumId: 10 },
+            { id: 142, title: "Exploding Whale (Doveman Remix)", album: "The Greatest Gift", year: 2017, albumId: 10 },
+            { id: 143, title: "All of Me Wants All of You (Helado Negro Remix)", album: "The Greatest Gift", year: 2017, albumId: 10 },
+            { id: 144, title: "Fourth of July (900X Remix)", album: "The Greatest Gift", year: 2017, albumId: 10 },
+            { id: 145, title: "The Hidden River of My Life", album: "The Greatest Gift", year: 2017, albumId: 10 },
+            { id: 146, title: "City of Roses", album: "The Greatest Gift", year: 2017, albumId: 10 },
+            { id: 147, title: "Carrie & Lowell (iPhone Demo)", album: "The Greatest Gift", year: 2017, albumId: 10 },
+            // The Ascension (2020) - 15 tracks
+            { id: 148, title: "Make Me an Offer I Cannot Refuse", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 149, title: "Run Away with Me", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 150, title: "Video Game", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 151, title: "Lamentations", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 152, title: "Tell Me You Love Me", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 153, title: "Die Happy", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 154, title: "Ativan", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 155, title: "Ursa Major", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 156, title: "Landslide", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 157, title: "Gilgamesh", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 158, title: "Death Star", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 159, title: "Goodbye to All That", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 160, title: "Sugar", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 161, title: "The Ascension", album: "The Ascension", year: 2020, albumId: 11 },
+            { id: 162, title: "America", album: "The Ascension", year: 2020, albumId: 11 },
+            // Javelin (2023) - 10 tracks
+            { id: 163, title: "Goodbye Evergreen", album: "Javelin", year: 2023, albumId: 12 },
+            { id: 164, title: "A Running Start", album: "Javelin", year: 2023, albumId: 12 },
+            { id: 165, title: "Will Anybody Ever Love Me?", album: "Javelin", year: 2023, albumId: 12 },
+            { id: 166, title: "Everything That Rises", album: "Javelin", year: 2023, albumId: 12 },
+            { id: 167, title: "Genuflecting Ghost", album: "Javelin", year: 2023, albumId: 12 },
+            { id: 168, title: "My Red Little Fox", album: "Javelin", year: 2023, albumId: 12 },
+            { id: 169, title: "So You Are Tired", album: "Javelin", year: 2023, albumId: 12 },
+            { id: 170, title: "Javelin (To Have and To Hold)", album: "Javelin", year: 2023, albumId: 12 },
+            { id: 171, title: "Shit Talk", album: "Javelin", year: 2023, albumId: 12 },
+            { id: 172, title: "There's a World", album: "Javelin", year: 2023, albumId: 12 },
+            // Call Me By Your Name OST (2017) - 3 tracks
+            { id: 173, title: "Futile Devices (Doveman Remix)", album: "Call Me By Your Name OST", year: 2017, albumId: 13 },
+            { id: 174, title: "Mystery of Love", album: "Call Me By Your Name OST", year: 2017, albumId: 13 },
+            { id: 175, title: "Visions of Gideon", album: "Call Me By Your Name OST", year: 2017, albumId: 13 },
+        ];
+        
+        const ALBUM_GRADIENTS = { 1: 'album-gradient-1', 2: 'album-gradient-2', 3: 'album-gradient-3', 4: 'album-gradient-4', 5: 'album-gradient-5', 6: 'album-gradient-6', 7: 'album-gradient-7', 8: 'album-gradient-8', 9: 'album-gradient-9', 10: 'album-gradient-10', 11: 'album-gradient-11', 12: 'album-gradient-12', 13: 'album-gradient-13' };
+        const K_FACTOR = 32, INITIAL_RATING = 1200, MATCHES_FOR_COMPLETION = 5;
+        let currentUser = null, songs = [], currentPair = [null, null], totalMatches = 0, showingFullList = false;
+
+        function calculateExpectedScore(rA, rB) { return 1 / (1 + Math.pow(10, (rB - rA) / 400)); }
+        function updateRatings(wR, lR) { const eW = calculateExpectedScore(wR, lR), eL = calculateExpectedScore(lR, wR); return { winner: Math.round(wR + K_FACTOR * (1 - eW)), loser: Math.round(lR + K_FACTOR * (0 - eL)) }; }
+        function initializeSongs() { return DISCOGRAPHY.map(s => ({ ...s, rating: INITIAL_RATING, matches: 0 })); }
+        function getStorageKey(u) { return `sufjan_ranker_${u.toLowerCase().trim()}`; }
+        function saveData() { if (!currentUser) return; localStorage.setItem(getStorageKey(currentUser), JSON.stringify({ username: currentUser, songs, totalMatches, lastSaved: new Date().toISOString() })); }
+        function loadData(username) { const saved = localStorage.getItem(getStorageKey(username)); if (saved) { try { const data = JSON.parse(saved); songs = data.songs; totalMatches = data.totalMatches || 0; DISCOGRAPHY.forEach(d => { if (!songs.find(s => s.id === d.id)) songs.push({ ...d, rating: INITIAL_RATING, matches: 0 }); }); return true; } catch (e) { console.error(e); } } songs = initializeSongs(); totalMatches = 0; return false; }
+        function selectNextPair() { const unplayed = songs.filter(s => s.matches === 0); if (unplayed.length > 0) { const u = unplayed[Math.floor(Math.random() * unplayed.length)]; const played = songs.filter(s => s.matches > 0 && s.id !== u.id); let opp; if (played.length === 0) { const other = unplayed.filter(s => s.id !== u.id); opp = other[Math.floor(Math.random() * other.length)]; } else { played.sort((a, b) => Math.abs(a.rating - 1200) - Math.abs(b.rating - 1200)); const top = played.slice(0, Math.min(5, played.length)); opp = top[Math.floor(Math.random() * top.length)]; } return [u, opp]; } const pairs = []; for (let i = 0; i < songs.length; i++) for (let j = i + 1; j < songs.length; j++) pairs.push({ a: songs[i], b: songs[j], diff: Math.abs(songs[i].rating - songs[j].rating) }); pairs.sort((a, b) => a.diff - b.diff); const sel = pairs.slice(0, Math.min(10, pairs.length))[Math.floor(Math.random() * Math.min(10, pairs.length))]; return Math.random() > 0.5 ? [sel.a, sel.b] : [sel.b, sel.a]; }
+        function calculateProgress() { return Math.min(100, Math.round((songs.filter(s => s.matches >= MATCHES_FOR_COMPLETION).length / songs.length) * 100)); }
+        function isComplete() { return songs.every(s => s.matches >= MATCHES_FOR_COMPLETION); }
+        function updateProgressBar() { const p = calculateProgress(); document.getElementById('progressBar').style.width = `${p}%`; document.getElementById('progressText').textContent = `Progress: ${p}%`; document.getElementById('matchCount').textContent = `${totalMatches} matches`; document.getElementById('completionMessage').classList.toggle('hidden', !isComplete()); }
+        function displayPair() { currentPair = selectNextPair(); const [s1, s2] = currentPair; document.getElementById('title1').textContent = s1.title; document.getElementById('album1').innerHTML = `<i class="fas fa-compact-disc mr-1 text-dustyrose"></i>${s1.album} (${s1.year})`; document.getElementById('rating1').innerHTML = `<i class="fas fa-chart-line mr-1"></i>${s1.rating}`; document.getElementById('matches1').innerHTML = `<i class="fas fa-gamepad mr-1"></i>${s1.matches} matches`; document.getElementById('art1').className = `h-32 md:h-40 ${ALBUM_GRADIENTS[s1.albumId]} flex items-center justify-center`; document.getElementById('title2').textContent = s2.title; document.getElementById('album2').innerHTML = `<i class="fas fa-compact-disc mr-1 text-dustyrose"></i>${s2.album} (${s2.year})`; document.getElementById('rating2').innerHTML = `<i class="fas fa-chart-line mr-1"></i>${s2.rating}`; document.getElementById('matches2').innerHTML = `<i class="fas fa-gamepad mr-1"></i>${s2.matches} matches`; document.getElementById('art2').className = `h-32 md:h-40 ${ALBUM_GRADIENTS[s2.albumId]} flex items-center justify-center`; document.getElementById('card1').classList.add('fade-in'); document.getElementById('card2').classList.add('fade-in'); setTimeout(() => { document.getElementById('card1').classList.remove('fade-in'); document.getElementById('card2').classList.remove('fade-in'); }, 400); }
+        function updateLeaderboard() { const sorted = [...songs].sort((a, b) => b.rating - a.rating); const display = showingFullList ? sorted : sorted.slice(0, 10); const tbody = document.getElementById('leaderboardBody'); tbody.innerHTML = ''; display.forEach((s) => { const rank = sorted.indexOf(s) + 1; const row = document.createElement('tr'); row.className = 'leaderboard-item border-b border-sage/10 hover:bg-sage/5'; row.innerHTML = `<td class="py-3 px-4 text-sm font-semibold ${rank <= 3 ? 'text-goldenrod' : 'text-warmgray'}">${rank <= 3 ? '<i class="fas fa-' + (rank === 1 ? 'trophy' : rank === 2 ? 'medal' : 'award') + ' mr-1"></i>' : ''}${rank}</td><td class="py-3 px-4"><div class="text-sm font-medium text-forest line-clamp-1">${s.title}</div><div class="text-xs text-warmgray line-clamp-1">${s.album}</div></td><td class="py-3 px-4 text-right"><span class="text-sm font-semibold text-sage">${s.rating}</span></td>`; tbody.appendChild(row); }); document.getElementById('toggleText').textContent = showingFullList ? 'Show Top 10' : 'View All'; document.getElementById('toggleIcon').className = showingFullList ? 'fas fa-chevron-up ml-1' : 'fas fa-chevron-down ml-1'; }
+        function recordVote(winIdx) { const [w, l] = [currentPair[winIdx], currentPair[1 - winIdx]]; const r = updateRatings(w.rating, l.rating); const ws = songs.find(s => s.id === w.id), ls = songs.find(s => s.id === l.id); ws.rating = r.winner; ws.matches++; ls.rating = r.loser; ls.matches++; totalMatches++; saveData(); updateProgressBar(); updateLeaderboard(); displayPair(); }
+        function exportJSON() { const sorted = [...songs].sort((a, b) => b.rating - a.rating); const data = { username: currentUser, exportDate: new Date().toISOString(), totalMatches, rankings: sorted.map((s, i) => ({ rank: i + 1, title: s.title, album: s.album, year: s.year, rating: s.rating, matches: s.matches })) }; downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `sufjan-rankings-${currentUser}.json`); }
+        function exportCSV() { const sorted = [...songs].sort((a, b) => b.rating - a.rating); let csv = 'Rank,Title,Album,Year,Rating,Matches\n'; sorted.forEach((s, i) => { csv += `${i + 1},"${s.title.replace(/"/g, '""')}","${s.album.replace(/"/g, '""')}",${s.year},${s.rating},${s.matches}\n`; }); downloadBlob(new Blob([csv], { type: 'text/csv' }), `sufjan-rankings-${currentUser}.csv`); }
+        function importJSON(file) { const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if (!data.rankings || !Array.isArray(data.rankings)) { showImportStatus('Invalid file format. Please use a JSON file exported from this app.', false); return; } songs = initializeSongs(); let imported = 0; data.rankings.forEach(r => { const song = songs.find(s => s.title === r.title && s.album === r.album); if (song) { song.rating = r.rating || INITIAL_RATING; song.matches = r.matches || 0; imported++; } }); totalMatches = data.totalMatches || 0; saveData(); updateProgressBar(); updateLeaderboard(); displayPair(); showImportStatus(`Successfully imported ${imported} songs from "${data.username || 'unknown'}"!`, true); setTimeout(() => document.getElementById('importModal').classList.add('hidden'), 1500); } catch (err) { showImportStatus('Error reading file. Please ensure it is a valid JSON file.', false); } }; reader.readAsText(file); }
+        function showImportStatus(msg, success) { const status = document.getElementById('importStatus'); status.textContent = msg; status.className = `text-center text-sm py-2 rounded-lg ${success ? 'bg-sage/20 text-forest' : 'bg-dustyrose/20 text-dustyrose'}`; status.classList.remove('hidden'); }
+        function downloadBlob(blob, filename) { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const usernameInput = document.getElementById('usernameInput'), startButton = document.getElementById('startButton'), usernameModal = document.getElementById('usernameModal'), mainApp = document.getElementById('mainApp');
+            usernameInput.addEventListener('input', (e) => { startButton.disabled = e.target.value.trim().length === 0; });
+            startButton.addEventListener('click', () => { const u = usernameInput.value.trim(); if (u) { currentUser = u; loadData(u); usernameModal.classList.add('hidden'); mainApp.classList.remove('hidden'); document.getElementById('welcomeUser').textContent = `Welcome, ${u}`; updateProgressBar(); updateLeaderboard(); displayPair(); } });
+            usernameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !startButton.disabled) startButton.click(); });
+            document.getElementById('card1').addEventListener('click', () => recordVote(0));
+            document.getElementById('card2').addEventListener('click', () => recordVote(1));
+            document.getElementById('skipBtn').addEventListener('click', displayPair);
+            document.getElementById('toggleFullList').addEventListener('click', () => { showingFullList = !showingFullList; updateLeaderboard(); });
+            document.getElementById('exportBtn').addEventListener('click', () => document.getElementById('exportModal').classList.remove('hidden'));
+            document.getElementById('closeExport').addEventListener('click', () => document.getElementById('exportModal').classList.add('hidden'));
+            document.getElementById('exportJSON').addEventListener('click', () => { exportJSON(); document.getElementById('exportModal').classList.add('hidden'); });
+            document.getElementById('exportCSV').addEventListener('click', () => { exportCSV(); document.getElementById('exportModal').classList.add('hidden'); });
+            document.getElementById('resetBtn').addEventListener('click', () => document.getElementById('resetModal').classList.remove('hidden'));
+            document.getElementById('cancelReset').addEventListener('click', () => document.getElementById('resetModal').classList.add('hidden'));
+            document.getElementById('confirmReset').addEventListener('click', () => { songs = initializeSongs(); totalMatches = 0; saveData(); document.getElementById('resetModal').classList.add('hidden'); updateProgressBar(); updateLeaderboard(); displayPair(); });
+            document.getElementById('importBtn').addEventListener('click', () => { document.getElementById('importStatus').classList.add('hidden'); document.getElementById('importModal').classList.remove('hidden'); });
+            document.getElementById('importFileInput').addEventListener('change', (e) => { if (e.target.files.length > 0) importJSON(e.target.files[0]); });
+            document.getElementById('closeImport').addEventListener('click', () => document.getElementById('importModal').classList.add('hidden'));
+            document.getElementById('exportModal').addEventListener('click', (e) => { if (e.target === document.getElementById('exportModal')) document.getElementById('exportModal').classList.add('hidden'); });
+            document.getElementById('resetModal').addEventListener('click', (e) => { if (e.target === document.getElementById('resetModal')) document.getElementById('resetModal').classList.add('hidden'); });
+        });
+    </script>
+</body>
+</html>
