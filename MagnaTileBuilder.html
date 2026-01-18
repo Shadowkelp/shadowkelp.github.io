@@ -1,0 +1,1225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>MagnaTile 3D Blueprint Maker (Phase 1)</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Three.js r128 (cdnjs) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#0a0a0f;
+      --panel:#0f111a;
+      --panel2:#101426;
+      --border:rgba(255,255,255,0.10);
+      --text:rgba(255,255,255,0.88);
+      --muted:rgba(255,255,255,0.62);
+
+      --cyan:#00d4ff;
+      --orange:#ff8c42;
+      --danger:#ff6b35;
+      --green:#00ff88;
+    }
+
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      overflow:hidden;
+      font-family: Outfit, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+
+      /* Critical for mobile: prevent browser panning/zooming while we handle gestures */
+      touch-action:none;
+      overscroll-behavior:none;
+    }
+
+    #app{
+      position:fixed; inset:0;
+    }
+
+    canvas{
+      position:fixed; inset:0;
+      width:100%; height:100%;
+      display:block;
+      background:var(--bg);
+    }
+
+    /* Header */
+    .header{
+      position:fixed;
+      top:0; left:0; right:0;
+      height:54px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:10px 12px;
+      background:linear-gradient(180deg, rgba(10,10,15,0.96) 0%, rgba(10,10,15,0.72) 80%, rgba(10,10,15,0.00) 100%);
+      pointer-events:none; /* let clicks pass through except interactive elements */
+      z-index:10;
+    }
+    .header .left, .header .right{
+      display:flex; align-items:center; gap:10px;
+      pointer-events:auto;
+    }
+    .brand{
+      display:flex; align-items:baseline; gap:10px;
+      font-family: JetBrains Mono, ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing:0.2px;
+      font-weight:600;
+    }
+    .brand .dot{
+      width:10px; height:10px; border-radius:50%;
+      background:var(--cyan);
+      box-shadow:0 0 18px rgba(0,212,255,0.55);
+    }
+    .stat{
+      font-family: JetBrains Mono, ui-monospace, Menlo, Consolas, monospace;
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--border);
+      background:rgba(15,17,26,0.65);
+      padding:6px 10px;
+      border-radius:12px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display:flex; gap:10px; align-items:center;
+    }
+    .stat b{ color:var(--text); font-weight:600; }
+
+    /* Top-left grid toggle */
+    .chip{
+      border:1px solid var(--border);
+      background:rgba(15,17,26,0.75);
+      color:var(--text);
+      border-radius:14px;
+      padding:8px 10px;
+      font-size:12px;
+      font-family: JetBrains Mono, ui-monospace, Menlo, Consolas, monospace;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .chip.on{
+      border-color: rgba(0,212,255,0.45);
+      box-shadow: 0 0 0 2px rgba(0,212,255,0.10) inset;
+    }
+
+    /* Camera height buttons */
+    .camBtns{
+      display:flex; gap:8px;
+    }
+    .camBtn{
+      width:34px; height:34px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(15,17,26,0.75);
+      color:var(--text);
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      display:grid; place-items:center;
+      font-family: JetBrains Mono, ui-monospace, Menlo, Consolas, monospace;
+      font-size:14px;
+      line-height:1;
+    }
+
+    /* Selection badge */
+    .badge{
+      position:fixed;
+      top:62px;
+      right:12px;
+      z-index:10;
+      pointer-events:none;
+      font-family: JetBrains Mono, ui-monospace, Menlo, Consolas, monospace;
+      font-size:12px;
+      color:var(--muted);
+      background:rgba(15,17,26,0.65);
+      border:1px solid var(--border);
+      padding:8px 10px;
+      border-radius:12px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display:flex; gap:10px; align-items:center;
+    }
+    .badge b{ color:var(--cyan); }
+
+    /* SNAPPED indicator */
+    .snapped{
+      position:fixed;
+      top:68px;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:12;
+      pointer-events:none;
+      font-family: JetBrains Mono, ui-monospace, Menlo, Consolas, monospace;
+      font-weight:600;
+      letter-spacing:0.8px;
+      color:rgba(0,0,0,0.90);
+      background:var(--green);
+      border-radius:999px;
+      padding:8px 12px;
+      opacity:0;
+      filter: drop-shadow(0 10px 20px rgba(0,255,136,0.18));
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+    .snapped.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(-2px);
+    }
+
+    /* Bottom Control Panel */
+    .panel{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      z-index:10;
+      padding:10px 12px calc(12px + env(safe-area-inset-bottom)) 12px;
+      background:linear-gradient(180deg, rgba(10,10,15,0.00) 0%, rgba(10,10,15,0.65) 22%, rgba(10,10,15,0.94) 100%);
+      pointer-events:none;
+    }
+    .panelInner{
+      pointer-events:auto;
+      border:1px solid var(--border);
+      background:rgba(15,17,26,0.78);
+      border-radius:18px;
+      padding:12px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display:grid;
+      gap:10px;
+      max-width:1100px;
+      margin:0 auto;
+    }
+
+    .row{
+      display:flex; gap:10px; flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .btn{
+      border:1px solid var(--border);
+      background:rgba(16,20,38,0.65);
+      color:var(--text);
+      border-radius:14px;
+      padding:10px 12px;
+      font-weight:600;
+      font-size:13px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      min-height:40px;
+    }
+    .btn.primary{
+      border-color: rgba(0,212,255,0.30);
+      box-shadow: 0 0 0 2px rgba(0,212,255,0.10) inset;
+    }
+    .btn.danger{
+      background: rgba(255,107,53,0.12);
+      border-color: rgba(255,107,53,0.35);
+      color: rgba(255,255,255,0.92);
+    }
+    .btn.ghost{
+      background: rgba(255,255,255,0.05);
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .control{
+      flex:1 1 300px;
+      min-width:260px;
+      border:1px solid var(--border);
+      background:rgba(16,20,38,0.55);
+      border-radius:14px;
+      padding:10px 12px;
+      display:grid;
+      gap:8px;
+    }
+    .labelRow{
+      display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+      font-family: JetBrains Mono, ui-monospace, Menlo, Consolas, monospace;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .value{
+      color:var(--text);
+      font-weight:600;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--cyan);
+    }
+
+    .tiltGrid{
+      display:grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap:8px;
+    }
+    .tiltBtn{
+      border:1px solid var(--border);
+      background:rgba(16,20,38,0.60);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 0;
+      font-family: JetBrains Mono, ui-monospace, Menlo, Consolas, monospace;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      text-align:center;
+      min-height:40px;
+    }
+    .tiltBtn.active{
+      border-color: rgba(0,255,136,0.35);
+      box-shadow: 0 0 0 2px rgba(0,255,136,0.12) inset;
+      color: rgba(255,255,255,0.95);
+    }
+
+    /* Helper footer hint (optional) */
+    .hint{
+      font-family: JetBrains Mono, ui-monospace, Menlo, Consolas, monospace;
+      font-size:11px;
+      color:rgba(255,255,255,0.46);
+      line-height:1.25;
+    }
+  </style>
+</head>
+
+<body>
+<div id="app">
+  <div class="header">
+    <div class="left">
+      <button id="gridToggle" class="chip on" type="button">GRID: ON</button>
+      <div class="brand">
+        <span class="dot"></span>
+        <span>MagnaTile 3D Blueprint Maker</span>
+      </div>
+      <div class="stat" id="tileStat"><span>Tiles</span><b id="tileCount">0</b></div>
+    </div>
+    <div class="right">
+      <div class="camBtns">
+        <button id="camDown" class="camBtn" title="Lower camera height" type="button">-</button>
+        <button id="camUp" class="camBtn" title="Raise camera height" type="button">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="badge" id="selBadge">Selected: <b id="selId">None</b></div>
+  <div class="snapped" id="snappedToast">SNAPPED</div>
+
+  <canvas id="c"></canvas>
+
+  <div class="panel">
+    <div class="panelInner">
+      <div class="row">
+        <button id="addTile" class="btn primary" type="button">Add Tile</button>
+        <button id="delTile" class="btn danger" type="button">Delete</button>
+        <button id="clearAll" class="btn ghost" type="button">Clear All</button>
+      </div>
+
+      <div class="row">
+        <div class="control">
+          <div class="labelRow">
+            <span>Y-Axis Rotation</span>
+            <span class="value"><span id="rotVal">0</span>°</span>
+          </div>
+          <input id="rotSlider" type="range" min="0" max="360" step="15" value="0" />
+          <div class="hint">Select a tile, then drag it. Desktop orbit: right-click drag. Mobile orbit: drag empty space. Zoom: wheel or pinch.</div>
+        </div>
+
+        <div class="control">
+          <div class="labelRow">
+            <span>Height</span>
+            <span class="value"><span id="hVal">0</span> cm</span>
+          </div>
+          <input id="hSlider" type="range" min="0" max="30" step="1" value="0" style="accent-color: var(--green);" />
+          <div class="hint">Height lifts the tile upward from its ground-contact pose. Range: 0–30cm (0–3 scene units).</div>
+        </div>
+      </div>
+
+      <div class="control">
+        <div class="labelRow">
+          <span>X-Axis Tilt Presets</span>
+          <span class="value"><span id="tiltVal">0</span>°</span>
+        </div>
+        <div class="tiltGrid" id="tiltGrid"></div>
+        <div class="hint">Tilt affects how the tile stands (flat vs wall). Snapping works across flat/vertical/perpendicular edge joins.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ============================================================
+  // Constants (scene units: 1 unit = 10cm)
+  // ============================================================
+  const CM_PER_UNIT = 10;
+  const TILE_SMALL_CM = 5;                 // 5cm x 5cm
+  const TILE_SMALL_U  = TILE_SMALL_CM / CM_PER_UNIT;  // 0.5 units
+  const TILE_THICK_U  = 0.08;
+
+  const SNAP_DIST_MIN = 1.0;   // threshold range (units)
+  const SNAP_DIST_MAX = 1.2;
+
+  const COLORS = {
+    bg:        0x0a0a0f,
+    ground:    0x0c0f18,
+    grid:      0x1e2840,
+    tile:      0xff8c42,
+    frame:     0x1b2230,
+    magnet:    0x0b0f14,
+    cyan:      0x00d4ff,
+    green:     0x00ff88,
+    danger:    0xff6b35,
+  };
+
+  const TILT_PRESETS = [0, 30, 45, 60, 90, -30, -45, -60, -90];
+
+  // ============================================================
+  // DOM
+  // ============================================================
+  const canvas = document.getElementById('c');
+
+  const tileCountEl = document.getElementById('tileCount');
+  const selIdEl = document.getElementById('selId');
+  const snappedToast = document.getElementById('snappedToast');
+
+  const gridToggleBtn = document.getElementById('gridToggle');
+  const addTileBtn = document.getElementById('addTile');
+  const delTileBtn = document.getElementById('delTile');
+  const clearAllBtn = document.getElementById('clearAll');
+
+  const rotSlider = document.getElementById('rotSlider');
+  const rotValEl = document.getElementById('rotVal');
+
+  const hSlider = document.getElementById('hSlider');
+  const hValEl = document.getElementById('hVal');
+
+  const tiltGridEl = document.getElementById('tiltGrid');
+  const tiltValEl = document.getElementById('tiltVal');
+
+  const camUpBtn = document.getElementById('camUp');
+  const camDownBtn = document.getElementById('camDown');
+
+  // Build tilt buttons
+  const tiltButtons = new Map();
+  TILT_PRESETS.forEach((deg) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tiltBtn';
+    b.textContent = `${deg}°`;
+    b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); });
+    b.addEventListener('click', () => {
+      if (!selected) return;
+      selected.userData.tiltDeg = deg;
+      applySelectedFromUI();
+      updateTiltUI();
+    });
+    tiltGridEl.appendChild(b);
+    tiltButtons.set(deg, b);
+  });
+
+  // ============================================================
+  // Three.js scene setup
+  // ============================================================
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(COLORS.bg, 1);
+
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(COLORS.bg);
+
+  // Camera orbit (custom)
+  const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.02, 200);
+  const orbit = {
+    target: new THREE.Vector3(0, 0, 0),
+    radius: 6.5,
+    theta:  Math.PI * 0.25,   // left-right
+    phi:    Math.PI * 0.30,   // up-down (0..PI/2 typical)
+    minR:   2.0,
+    maxR:   24.0,
+    minPhi: 0.10,
+    maxPhi: Math.PI * 0.49,
+  };
+
+  function updateCamera(){
+    const r = orbit.radius;
+    const sinPhi = Math.sin(orbit.phi);
+    const x = orbit.target.x + r * sinPhi * Math.sin(orbit.theta);
+    const y = orbit.target.y + r * Math.cos(orbit.phi);
+    const z = orbit.target.z + r * sinPhi * Math.cos(orbit.theta);
+    camera.position.set(x, y, z);
+    camera.lookAt(orbit.target);
+  }
+  updateCamera();
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+  scene.add(ambient);
+
+  const dir = new THREE.DirectionalLight(0xffffff, 0.95);
+  dir.position.set(6, 10, 5);
+  dir.castShadow = true;
+  dir.shadow.mapSize.set(2048, 2048);
+  dir.shadow.camera.near = 0.5;
+  dir.shadow.camera.far = 60;
+  dir.shadow.camera.left = -16;
+  dir.shadow.camera.right = 16;
+  dir.shadow.camera.top = 16;
+  dir.shadow.camera.bottom = -16;
+  scene.add(dir);
+
+  // Ground plane
+  const groundGeo = new THREE.PlaneGeometry(80, 80);
+  const groundMat = new THREE.MeshStandardMaterial({
+    color: COLORS.ground,
+    roughness: 0.95,
+    metalness: 0.0,
+  });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // Optional grid overlay
+  const grid = new THREE.GridHelper(80, 80, COLORS.grid, COLORS.grid);
+  grid.material.transparent = true;
+  grid.material.opacity = 0.25;
+  grid.position.y = 0.001;
+  scene.add(grid);
+
+  let gridOn = true;
+
+  // ============================================================
+  // Tile construction (Phase 1: small square only)
+  // ============================================================
+  let nextTileId = 1;
+  const tiles = []; // { id, group }
+
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+
+  function makeSmallSquareTile() {
+    const group = new THREE.Group();
+
+    // Main translucent body
+    const bodyGeo = new THREE.BoxGeometry(TILE_SMALL_U, TILE_THICK_U, TILE_SMALL_U);
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: COLORS.tile,
+      transparent: true,
+      opacity: 0.85,
+      roughness: 0.25,
+      metalness: 0.05,
+      emissive: new THREE.Color(0x000000),
+      emissiveIntensity: 0.0,
+    });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.castShadow = true;
+    body.receiveShadow = true;
+    group.add(body);
+
+    // Frame: 4 thin perimeter bars
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: COLORS.frame,
+      roughness: 0.65,
+      metalness: 0.05,
+    });
+
+    const frameW = 0.05;
+    const half = TILE_SMALL_U / 2;
+    const frameY = 0;
+
+    // Along X (front/back)
+    const barXGeo = new THREE.BoxGeometry(TILE_SMALL_U + frameW, TILE_THICK_U + 0.01, frameW);
+    const barFront = new THREE.Mesh(barXGeo, frameMat);
+    barFront.position.set(0, frameY,  half);
+    const barBack  = new THREE.Mesh(barXGeo, frameMat);
+    barBack.position.set(0, frameY, -half);
+
+    // Along Z (left/right)
+    const barZGeo = new THREE.BoxGeometry(frameW, TILE_THICK_U + 0.01, TILE_SMALL_U + frameW);
+    const barRight = new THREE.Mesh(barZGeo, frameMat);
+    barRight.position.set( half, frameY, 0);
+    const barLeft  = new THREE.Mesh(barZGeo, frameMat);
+    barLeft.position.set(-half, frameY, 0);
+
+    [barFront, barBack, barRight, barLeft].forEach(m => {
+      m.castShadow = true;
+      m.receiveShadow = true;
+      group.add(m);
+    });
+
+    // Magnets: 2 per edge (small dark rectangles)
+    const magnetMat = new THREE.MeshStandardMaterial({
+      color: COLORS.magnet,
+      roughness: 0.35,
+      metalness: 0.15
+    });
+
+    const magGeoFB = new THREE.BoxGeometry(0.06, 0.02, 0.02); // on front/back edges
+    const magGeoLR = new THREE.BoxGeometry(0.02, 0.02, 0.06); // on left/right edges
+
+    const magOffset = 0.01; // slight outward offset so they show
+    const magY = 0;         // center
+
+    // front/back magnets at x = +/- quarter
+    const x1 = -TILE_SMALL_U * 0.25;
+    const x2 =  TILE_SMALL_U * 0.25;
+
+    const zFront = half + magOffset;
+    const zBack  = -half - magOffset;
+
+    const mF1 = new THREE.Mesh(magGeoFB, magnetMat); mF1.position.set(x1, magY, zFront);
+    const mF2 = new THREE.Mesh(magGeoFB, magnetMat); mF2.position.set(x2, magY, zFront);
+    const mB1 = new THREE.Mesh(magGeoFB, magnetMat); mB1.position.set(x1, magY, zBack);
+    const mB2 = new THREE.Mesh(magGeoFB, magnetMat); mB2.position.set(x2, magY, zBack);
+
+    // left/right magnets at z = +/- quarter
+    const z1 = -TILE_SMALL_U * 0.25;
+    const z2 =  TILE_SMALL_U * 0.25;
+
+    const xRight = half + magOffset;
+    const xLeft  = -half - magOffset;
+
+    const mR1 = new THREE.Mesh(magGeoLR, magnetMat); mR1.position.set(xRight, magY, z1);
+    const mR2 = new THREE.Mesh(magGeoLR, magnetMat); mR2.position.set(xRight, magY, z2);
+    const mL1 = new THREE.Mesh(magGeoLR, magnetMat); mL1.position.set(xLeft,  magY, z1);
+    const mL2 = new THREE.Mesh(magGeoLR, magnetMat); mL2.position.set(xLeft,  magY, z2);
+
+    [mF1,mF2,mB1,mB2,mR1,mR2,mL1,mL2].forEach(m => {
+      m.castShadow = true;
+      m.receiveShadow = true;
+      group.add(m);
+    });
+
+    // Store references
+    group.userData.body = body;
+
+    return group;
+  }
+
+  function addTile() {
+    const g = makeSmallSquareTile();
+    const id = nextTileId++;
+    g.userData.tileId = id;
+
+    // Default pose params
+    g.userData.yawDeg  = 0;
+    g.userData.tiltDeg = 0;
+    g.userData.heightCm = 0;
+
+    // Spawn near origin with small offset
+    const offset = (tiles.length % 6) * (TILE_SMALL_U * 1.35);
+    g.position.set(-1.5 + offset, 0, 0);
+    applyGroundContactPose(g);
+
+    // Mark all children as belonging to this tile for raycasting parent detection
+    g.traverse(obj => {
+      if (obj.isMesh) obj.userData.tileId = id;
+    });
+
+    scene.add(g);
+    tiles.push({ id, group: g });
+    setSelected(g);
+    syncTileCount();
+  }
+
+  function removeSelected() {
+    if (!selected) return;
+    const id = selected.userData.tileId;
+    const idx = tiles.findIndex(t => t.id === id);
+    if (idx >= 0) {
+      scene.remove(tiles[idx].group);
+      tiles.splice(idx, 1);
+    }
+    selected = null;
+    syncTileCount();
+    updateSelectionUI();
+    hidePreview();
+  }
+
+  function clearAll() {
+    tiles.forEach(t => scene.remove(t.group));
+    tiles.length = 0;
+    selected = null;
+    syncTileCount();
+    updateSelectionUI();
+    hidePreview();
+  }
+
+  function syncTileCount() {
+    tileCountEl.textContent = String(tiles.length);
+  }
+
+  // ============================================================
+  // Pose application (ground contact rule + height offset)
+  // ============================================================
+  const tmpBox = new THREE.Box3();
+  const tmpVec = new THREE.Vector3();
+
+  function setTileRotationFromParams(tileGroup) {
+    const yaw = THREE.MathUtils.degToRad(tileGroup.userData.yawDeg || 0);
+    const tilt = THREE.MathUtils.degToRad(tileGroup.userData.tiltDeg || 0);
+    // Y then X so yaw defines "compass" and tilt applies around the tile's local X after yaw.
+    tileGroup.rotation.set(tilt, yaw, 0, 'YXZ');
+  }
+
+  function applyGroundContactPose(tileGroup) {
+    setTileRotationFromParams(tileGroup);
+
+    // Compute "base lift" required so the lowest point touches y=0 when height=0.
+    // We temporarily set y=0 to measure bounding box in world space, then lift.
+    const prevY = tileGroup.position.y;
+    tileGroup.position.y = 0;
+    tileGroup.updateMatrixWorld(true);
+
+    tmpBox.setFromObject(tileGroup);
+    const minY = tmpBox.min.y;
+    const baseLift = -minY;
+
+    const hCm = tileGroup.userData.heightCm || 0;
+    const hU = hCm / CM_PER_UNIT;
+
+    tileGroup.position.y = baseLift + hU;
+
+    // Preserve x/z as-is; y is now consistent with ground contact + height offset.
+    tileGroup.updateMatrixWorld(true);
+
+    // restore not needed; prevY ignored by design
+  }
+
+  function applySelectedFromUI() {
+    if (!selected) return;
+    selected.userData.yawDeg = Number(rotSlider.value);
+    selected.userData.heightCm = Number(hSlider.value);
+    // tilt is set by tilt buttons
+    applyGroundContactPose(selected);
+  }
+
+  // ============================================================
+  // Selection highlight
+  // ============================================================
+  let selected = null;
+
+  function setSelected(tileGroup) {
+    if (selected === tileGroup) return;
+
+    // clear previous
+    if (selected && selected.userData.body) {
+      selected.userData.body.material.emissive.set(0x000000);
+      selected.userData.body.material.emissiveIntensity = 0.0;
+    }
+
+    selected = tileGroup;
+
+    // apply highlight
+    if (selected && selected.userData.body) {
+      selected.userData.body.material.emissive.set(COLORS.cyan);
+      selected.userData.body.material.emissiveIntensity = 0.45;
+    }
+
+    // sync UI with selection
+    updateSelectionUI();
+    if (selected) {
+      rotSlider.value = String(selected.userData.yawDeg || 0);
+      hSlider.value = String(selected.userData.heightCm || 0);
+      rotValEl.textContent = String(selected.userData.yawDeg || 0);
+      hValEl.textContent = String(selected.userData.heightCm || 0);
+      updateTiltUI();
+    }
+  }
+
+  function updateSelectionUI() {
+    selIdEl.textContent = selected ? String(selected.userData.tileId) : 'None';
+  }
+
+  function updateTiltUI() {
+    const cur = selected ? (selected.userData.tiltDeg || 0) : 0;
+    tiltValEl.textContent = String(cur);
+    tiltButtons.forEach((btn, deg) => {
+      btn.classList.toggle('active', deg === cur);
+    });
+  }
+
+  // ============================================================
+  // Snap preview (green fill + wireframe + corner markers) + pulse
+  // ============================================================
+  const previewGroup = new THREE.Group();
+  previewGroup.visible = false;
+
+  const previewFillMat = new THREE.MeshBasicMaterial({
+    color: COLORS.green,
+    transparent: true,
+    opacity: 0.18,
+    depthWrite: false,
+  });
+
+  const previewWireMat = new THREE.LineBasicMaterial({
+    color: COLORS.green,
+    transparent: true,
+    opacity: 0.85,
+    depthWrite: false,
+  });
+
+  const previewGeo = new THREE.BoxGeometry(TILE_SMALL_U, TILE_THICK_U, TILE_SMALL_U);
+  const previewFill = new THREE.Mesh(previewGeo, previewFillMat);
+  const previewWire = new THREE.LineSegments(new THREE.EdgesGeometry(previewGeo), previewWireMat);
+
+  // Corner markers
+  const cornerMat = new THREE.MeshBasicMaterial({ color: COLORS.green, transparent:true, opacity: 0.95, depthWrite:false });
+  const cornerGeo = new THREE.SphereGeometry(0.03, 10, 10);
+  const cornerOffsets = [
+    new THREE.Vector3(-TILE_SMALL_U/2, 0, -TILE_SMALL_U/2),
+    new THREE.Vector3( TILE_SMALL_U/2, 0, -TILE_SMALL_U/2),
+    new THREE.Vector3( TILE_SMALL_U/2, 0,  TILE_SMALL_U/2),
+    new THREE.Vector3(-TILE_SMALL_U/2, 0,  TILE_SMALL_U/2),
+  ];
+  const corners = cornerOffsets.map(() => new THREE.Mesh(cornerGeo, cornerMat));
+  corners.forEach((c, i) => c.position.copy(cornerOffsets[i]));
+
+  previewGroup.add(previewFill);
+  previewGroup.add(previewWire);
+  corners.forEach(c => previewGroup.add(c));
+  scene.add(previewGroup);
+
+  let previewActive = false;
+  let previewSnapPos = new THREE.Vector3();
+  let previewSnapQuat = new THREE.Quaternion();
+
+  function showPreview(position, quaternion) {
+    previewGroup.visible = true;
+    previewGroup.position.copy(position);
+    previewGroup.quaternion.copy(quaternion);
+    previewActive = true;
+  }
+
+  function hidePreview() {
+    previewGroup.visible = false;
+    previewActive = false;
+  }
+
+  // ============================================================
+  // Edge snapping (critical feature)
+  // - 4 edges (front/back/left/right) in local space
+  // - compare moving vs stationary in world space
+  // ============================================================
+  const EDGE_DEFS = [
+    { name:'front', center: new THREE.Vector3(0, 0,  TILE_SMALL_U/2), normal: new THREE.Vector3(0, 0, 1) },
+    { name:'back',  center: new THREE.Vector3(0, 0, -TILE_SMALL_U/2), normal: new THREE.Vector3(0, 0,-1) },
+    { name:'right', center: new THREE.Vector3( TILE_SMALL_U/2, 0, 0), normal: new THREE.Vector3(1, 0, 0) },
+    { name:'left',  center: new THREE.Vector3(-TILE_SMALL_U/2, 0, 0), normal: new THREE.Vector3(-1,0, 0) },
+  ];
+
+  const _wc = new THREE.Vector3();
+  const _wn = new THREE.Vector3();
+  const _delta = new THREE.Vector3();
+
+  function getWorldEdges(tileGroup) {
+    const edges = [];
+    const mat = tileGroup.matrixWorld;
+    const q = tileGroup.getWorldQuaternion(new THREE.Quaternion());
+
+    for (const e of EDGE_DEFS) {
+      _wc.copy(e.center).applyMatrix4(mat);
+      _wn.copy(e.normal).applyQuaternion(q).normalize();
+      edges.push({
+        name: e.name,
+        center: _wc.clone(),
+        normal: _wn.clone(),
+      });
+    }
+    return edges;
+  }
+
+  function findBestSnap(movingGroup) {
+    // Returns { pos, quat, score } or null
+    const movingEdges = getWorldEdges(movingGroup);
+    let best = null;
+
+    for (const t of tiles) {
+      const other = t.group;
+      if (other === movingGroup) continue;
+
+      const otherEdges = getWorldEdges(other);
+      for (const me of movingEdges) {
+        for (const oe of otherEdges) {
+          const dist = me.center.distanceTo(oe.center);
+          if (dist > SNAP_DIST_MAX) continue;
+
+          // Edge directions should NOT be facing the same way (allow opposite or perpendicular)
+          const dirDot = me.normal.dot(oe.normal);
+          if (dirDot > 0.3) continue;
+
+          // Prefer closer snaps; lightly prefer "more opposite" normals
+          const score = dist + (Math.max(0, dirDot) * 0.15);
+
+          if (!best || score < best.score) {
+            // Offset vector to align edge centers (full 3D alignment)
+            _delta.copy(oe.center).sub(me.center);
+
+            const snapPos = movingGroup.position.clone().add(_delta);
+            const snapQuat = movingGroup.quaternion.clone();
+
+            best = { pos: snapPos, quat: snapQuat, score };
+          }
+        }
+      }
+    }
+
+    if (!best) return null;
+
+    // Optional: distance threshold varies; keep a "soft" minimum
+    // (This helps reduce accidental snap flicker at the far end.)
+    if (best.score > (SNAP_DIST_MAX + 0.05)) return null;
+
+    return best;
+  }
+
+  function toastSnapped() {
+    snappedToast.classList.add('show');
+    window.clearTimeout(toastSnapped._t);
+    toastSnapped._t = window.setTimeout(() => snappedToast.classList.remove('show'), 650);
+  }
+
+  // ============================================================
+  // Input handling:
+  // - Tile select: tap/click tile
+  // - Drag selected tile: drag on selected tile
+  // - Orbit: right-click drag (desktop) OR single-finger drag on empty (mobile)
+  // - Zoom: wheel OR pinch
+  // ============================================================
+  const pointers = new Map(); // pointerId -> {x,y, startedOnUI, startedOnTile, button}
+  let mode = 'idle';          // 'idle' | 'dragTile' | 'orbit' | 'pinch'
+  let drag = {
+    tile: null,
+    plane: new THREE.Plane(new THREE.Vector3(0,1,0), 0),
+    grabOffset: new THREE.Vector3(),
+    startPos: new THREE.Vector3(),
+  };
+
+  const pinch = { startDist: 0, startRadius: 0 };
+
+  function isPointerOnUI(e) {
+    // If the pointerdown originated from panel/header controls, ignore scene interactions.
+    const path = e.composedPath ? e.composedPath() : [];
+    return path.some(el => el && el.classList && (
+      el.classList.contains('panelInner') ||
+      el.classList.contains('panel') ||
+      el.classList.contains('header') ||
+      el.classList.contains('chip') ||
+      el.classList.contains('btn') ||
+      el.classList.contains('control') ||
+      el.classList.contains('tiltBtn') ||
+      el.classList.contains('camBtn')
+    ));
+  }
+
+  function setNDCFromEvent(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = ( (e.clientX - rect.left) / rect.width ) * 2 - 1;
+    const y = -( (e.clientY - rect.top) / rect.height ) * 2 + 1;
+    ndc.set(x, y);
+  }
+
+  function raycastTile(e) {
+    setNDCFromEvent(e);
+    raycaster.setFromCamera(ndc, camera);
+    const hits = raycaster.intersectObjects(scene.children, true);
+    for (const h of hits) {
+      const tid = h.object.userData.tileId;
+      if (tid) {
+        // find tile group by id
+        const found = tiles.find(t => t.id === tid);
+        if (found) return { tile: found.group, point: h.point };
+      }
+      // ignore ground / grid
+    }
+    return null;
+  }
+
+  function raycastGroundIntersection(e, plane) {
+    setNDCFromEvent(e);
+    raycaster.setFromCamera(ndc, camera);
+    const out = new THREE.Vector3();
+    const hit = raycaster.ray.intersectPlane(plane, out);
+    return hit ? out : null;
+  }
+
+  function beginTileDrag(tileGroup, hitPoint) {
+    mode = 'dragTile';
+    drag.tile = tileGroup;
+
+    // Drag plane at the tile's current world Y (horizontal)
+    const worldY = tileGroup.position.y;
+    drag.plane.set(new THREE.Vector3(0,1,0), -worldY);
+
+    drag.startPos.copy(tileGroup.position);
+
+    // Grab offset keeps relative hold point (prevents tile "jumping")
+    const p = hitPoint || tileGroup.position.clone();
+    drag.grabOffset.copy(p).sub(tileGroup.position);
+
+    hidePreview();
+  }
+
+  function beginOrbit() {
+    mode = 'orbit';
+    hidePreview();
+  }
+
+  function beginPinch() {
+    mode = 'pinch';
+    const pts = Array.from(pointers.values());
+    if (pts.length < 2) return;
+
+    const dx = pts[0].x - pts[1].x;
+    const dy = pts[0].y - pts[1].y;
+    pinch.startDist = Math.hypot(dx, dy);
+    pinch.startRadius = orbit.radius;
+
+    hidePreview();
+  }
+
+  function updateOrbit(dx, dy) {
+    orbit.theta -= dx * 0.0052;
+    orbit.phi   += dy * 0.0052;
+    orbit.phi = Math.max(orbit.minPhi, Math.min(orbit.maxPhi, orbit.phi));
+  }
+
+  function updateZoom(delta) {
+    // delta > 0 => zoom out
+    orbit.radius *= (1 + delta * 0.0012);
+    orbit.radius = Math.max(orbit.minR, Math.min(orbit.maxR, orbit.radius));
+  }
+
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  canvas.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+
+    if (isPointerOnUI(e)) return;
+
+    canvas.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, button: e.button });
+
+    // If two pointers => pinch mode (mobile)
+    if (pointers.size === 2) {
+      beginPinch();
+      return;
+    }
+
+    // Determine if pointer started on a tile
+    const hit = raycastTile(e);
+    const isOnTile = !!hit;
+
+    // Desktop orbit requires right-click drag
+    const isRightMouseOrbit = (e.pointerType === 'mouse' && e.button === 2);
+
+    if (isOnTile && !isRightMouseOrbit) {
+      setSelected(hit.tile);
+      beginTileDrag(hit.tile, hit.point);
+      return;
+    }
+
+    // Mobile orbit: single finger drag on empty space
+    if (!isOnTile || isRightMouseOrbit) {
+      beginOrbit();
+    }
+  }, { passive:false });
+
+  canvas.addEventListener('pointermove', (e) => {
+    e.preventDefault();
+    if (!pointers.has(e.pointerId)) return;
+
+    const p = pointers.get(e.pointerId);
+    const dx = e.clientX - p.x;
+    const dy = e.clientY - p.y;
+    p.x = e.clientX; p.y = e.clientY;
+
+    if (mode === 'pinch') {
+      const pts = Array.from(pointers.values());
+      if (pts.length < 2) return;
+      const ddx = pts[0].x - pts[1].x;
+      const ddy = pts[0].y - pts[1].y;
+      const dist = Math.hypot(ddx, ddy);
+      if (pinch.startDist > 0) {
+        const scale = pinch.startDist / Math.max(1, dist);
+        orbit.radius = Math.max(orbit.minR, Math.min(orbit.maxR, pinch.startRadius * scale));
+      }
+      return;
+    }
+
+    if (mode === 'orbit') {
+      updateOrbit(dx, dy);
+      return;
+    }
+
+    if (mode === 'dragTile' && drag.tile) {
+      // Drag on horizontal plane at current tile height
+      const hit = raycastGroundIntersection(e, drag.plane);
+      if (!hit) return;
+
+      const newPos = hit.clone().sub(drag.grabOffset);
+      drag.tile.position.x = newPos.x;
+      drag.tile.position.z = newPos.z;
+      drag.tile.updateMatrixWorld(true);
+
+      // Snap preview (critical feature)
+      const snap = findBestSnap(drag.tile);
+      if (snap) {
+        previewSnapPos.copy(snap.pos);
+        previewSnapQuat.copy(snap.quat);
+        showPreview(previewSnapPos, previewSnapQuat);
+      } else {
+        hidePreview();
+      }
+    }
+  }, { passive:false });
+
+  function endInteraction(pointerId) {
+    pointers.delete(pointerId);
+
+    if (mode === 'pinch') {
+      if (pointers.size < 2) mode = 'idle';
+      return;
+    }
+
+    if (mode === 'dragTile' && drag.tile) {
+      // Apply snap if preview active
+      if (previewActive) {
+        drag.tile.position.copy(previewSnapPos);
+        drag.tile.quaternion.copy(previewSnapQuat);
+        drag.tile.updateMatrixWorld(true);
+        toastSnapped();
+      }
+      hidePreview();
+      drag.tile = null;
+      mode = 'idle';
+      return;
+    }
+
+    if (mode === 'orbit') {
+      mode = 'idle';
+      return;
+    }
+  }
+
+  canvas.addEventListener('pointerup', (e) => { e.preventDefault(); endInteraction(e.pointerId); }, { passive:false });
+  canvas.addEventListener('pointercancel', (e) => { e.preventDefault(); endInteraction(e.pointerId); }, { passive:false });
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    updateZoom(e.deltaY);
+  }, { passive:false });
+
+  // ============================================================
+  // UI wiring
+  // ============================================================
+  gridToggleBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); }, { passive:false });
+  gridToggleBtn.addEventListener('click', () => {
+    gridOn = !gridOn;
+    grid.visible = gridOn;
+    gridToggleBtn.classList.toggle('on', gridOn);
+    gridToggleBtn.textContent = `GRID: ${gridOn ? 'ON' : 'OFF'}`;
+  });
+
+  addTileBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); }, { passive:false });
+  addTileBtn.addEventListener('click', () => addTile());
+
+  delTileBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); }, { passive:false });
+  delTileBtn.addEventListener('click', () => removeSelected());
+
+  clearAllBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); }, { passive:false });
+  clearAllBtn.addEventListener('click', () => clearAll());
+
+  rotSlider.addEventListener('pointerdown', (e) => { e.stopPropagation(); }, { passive:true });
+  rotSlider.addEventListener('input', () => {
+    rotValEl.textContent = String(rotSlider.value);
+    if (!selected) return;
+    selected.userData.yawDeg = Number(rotSlider.value);
+    applyGroundContactPose(selected);
+  });
+
+  hSlider.addEventListener('pointerdown', (e) => { e.stopPropagation(); }, { passive:true });
+  hSlider.addEventListener('input', () => {
+    hValEl.textContent = String(hSlider.value);
+    if (!selected) return;
+    selected.userData.heightCm = Number(hSlider.value);
+    applyGroundContactPose(selected);
+  });
+
+  camUpBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); }, { passive:false });
+  camDownBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); }, { passive:false });
+
+  camUpBtn.addEventListener('click', () => {
+    orbit.target.y = Math.min(5, orbit.target.y + 0.25);
+  });
+  camDownBtn.addEventListener('click', () => {
+    orbit.target.y = Math.max(-1, orbit.target.y - 0.25);
+  });
+
+  function applySelectedFromUI() {
+    // keep in sync if called from tilt button
+    rotValEl.textContent = String(rotSlider.value);
+    hValEl.textContent = String(hSlider.value);
+    if (!selected) return;
+    selected.userData.yawDeg = Number(rotSlider.value);
+    selected.userData.heightCm = Number(hSlider.value);
+    applyGroundContactPose(selected);
+  }
+
+  // ============================================================
+  // Resize
+  // ============================================================
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // ============================================================
+  // Animation loop: render + preview pulse
+  // ============================================================
+  const clock = new THREE.Clock();
+  function animate(){
+    requestAnimationFrame(animate);
+
+    // Camera
+    updateCamera();
+
+    // Preview pulse (animated opacity)
+    if (previewActive) {
+      const t = clock.getElapsedTime();
+      const pulse = 0.55 + 0.45 * Math.sin(t * 6.0);
+      previewFillMat.opacity = 0.10 + 0.16 * pulse;
+      previewWireMat.opacity = 0.55 + 0.40 * pulse;
+      cornerMat.opacity = 0.55 + 0.40 * pulse;
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // ============================================================
+  // Bootstrap: add one tile so the scene isn't empty
+  // ============================================================
+  syncTileCount();
+  updateSelectionUI();
+  updateTiltUI();
+  addTile();
+
+})();
+</script>
+</body>
+</html>
