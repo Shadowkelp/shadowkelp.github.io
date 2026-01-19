@@ -1862,13 +1862,13 @@ function onPointerMove(e) {
         }
     } else if (cameraControls.isOrbiting) {
         // Orbit camera
-        cameraControls.spherical.theta -= dx * 0.01;
-        cameraControls.spherical.phi += dy * 0.01;
+        cameraControls.spherical.theta += dx * 0.001;
+        cameraControls.spherical.phi -= dy * 0.001;
         cameraControls.spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraControls.spherical.phi));
         updateCameraFromSpherical();
     } else if (cameraControls.isPanning) {
         // Pan camera
-        const panSpeed = 0.01 * cameraControls.spherical.radius;
+        const panSpeed = 0.001 * cameraControls.spherical.radius;
         const right = new Vector3();
         const up = new Vector3(0, 1, 0);
         camera.getWorldDirection(right);
@@ -2045,26 +2045,49 @@ function onTouchMove(e) {
     } else if (e.touches.length === 2) {
         const t1 = e.touches[0];
         const t2 = e.touches[1];
-        
-        // Pinch zoom
+
         const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        const scale = touchStartDist / dist;
-        cameraControls.spherical.radius = Math.max(2, Math.min(20, touchStartRadius * scale));
-        
-        // Pan
         const centerX = (t1.clientX + t2.clientX) / 2;
         const centerY = (t1.clientY + t2.clientY) / 2;
+
+        // --- 1. ZOOM LOGIC ---
+        // Use the ratio to scale the radius
+        if (cameraControls.lastPinchDist > 0) {
+            const ratio = cameraControls.lastPinchDist / dist;
+            const ZOOM_SENSITIVITY = 0.00005; 
+            
+            // Smooth out the factor
+            const factor = 1 + (ratio - 1) * ZOOM_SENSITIVITY;
+            
+            cameraControls.spherical.radius *= factor;
+            
+            // HARD CLAMP: Prevent radius from becoming 0 or Infinity
+            cameraControls.target.x = Math.max(-50, Math.min(50, cameraControls.target.x));
+            cameraControls.target.z = Math.max(-50, Math.min(50, cameraControls.target.z));
+            cameraControls.spherical.radius = Math.max(2, Math.min(20, cameraControls.spherical.radius));
+        }
+
+        // --- 2. PAN LOGIC ---
+        // Only pan if we have a valid lastPointer from the SAME finger count
         const dx = centerX - cameraControls.lastPointer.x;
         const dy = centerY - cameraControls.lastPointer.y;
-        
-        const panSpeed = 0.005 * cameraControls.spherical.radius;
-        const right = new Vector3();
-        camera.getWorldDirection(right);
-        right.crossVectors(new Vector3(0, 1, 0), right).normalize();
-        
+
+        // Reduce pan speed during pinch to prevent "drifting"
+        const panSpeed = 0.002 * cameraControls.spherical.radius; 
+
+        const right = new THREE.Vector3();
+        camera.getWorldDirection(right); // This is actually 'forward'
+        const forward = right.clone(); 
+        right.crossVectors(new THREE.Vector3(0, 1, 0), forward).normalize();
+
+        // Move the target on the X/Z plane (standard for most apps)
         cameraControls.target.addScaledVector(right, -dx * panSpeed);
-        cameraControls.target.y += dy * panSpeed;
-        
+
+        // If you want to pan Y (up/down), use the 'up' vector or dy
+        cameraControls.target.y += dy * panSpeed; 
+
+        // --- 3. UPDATE STATE ---
+        cameraControls.lastPinchDist = dist;
         cameraControls.lastPointer = { x: centerX, y: centerY };
         updateCameraFromSpherical();
     }
