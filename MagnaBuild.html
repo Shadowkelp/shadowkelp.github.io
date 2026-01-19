@@ -1,0 +1,2416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Magnetic Tile 3D Blueprint Maker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-dark: #0a0e17;
+            --bg-panel: rgba(15, 22, 36, 0.92);
+            --border-glow: rgba(0, 200, 255, 0.3);
+            --accent-cyan: #00d4ff;
+            --accent-green: #00ff88;
+            --accent-orange: #ff8800;
+            --accent-pink: #ff0088;
+            --text-primary: #e8f4ff;
+            --text-secondary: #7a8fa8;
+            --btn-bg: rgba(0, 150, 200, 0.15);
+            --btn-hover: rgba(0, 200, 255, 0.25);
+            --btn-active: rgba(0, 255, 136, 0.3);
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            height: 100dvh;
+            touch-action: none;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        canvas {
+            display: block;
+            touch-action: none;
+        }
+        
+        /* UI Overlay */
+        .ui-layer {
+            position: fixed;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .ui-layer > * {
+            pointer-events: auto;
+        }
+        
+        /* Top Bar */
+        .top-bar {
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, var(--bg-panel), transparent);
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            letter-spacing: 2px;
+        }
+        
+        .logo span {
+            color: var(--accent-green);
+        }
+        
+        .help-btn {
+            background: var(--btn-bg);
+            border: 1px solid var(--border-glow);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .help-btn:hover {
+            background: var(--btn-hover);
+            border-color: var(--accent-cyan);
+        }
+        
+        /* Left Controls */
+        .left-controls {
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .control-panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            color: var(--accent-cyan);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .control-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .ctrl-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--btn-bg);
+            border: 1px solid var(--border-glow);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .ctrl-btn:hover {
+            background: var(--btn-hover);
+            border-color: var(--accent-cyan);
+            transform: scale(1.05);
+        }
+        
+        .ctrl-btn:active, .ctrl-btn.active {
+            background: var(--btn-active);
+            border-color: var(--accent-green);
+        }
+        
+        .ctrl-btn.small {
+            width: 28px;
+            height: 28px;
+            font-size: 0.85rem;
+        }
+        
+        .value-display {
+            min-width: 50px;
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: var(--accent-green);
+        }
+        
+        .slider-container {
+            width: 100%;
+        }
+        
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 150, 200, 0.2);
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--accent-cyan);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .tilt-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+        }
+        
+        /* Right Actions */
+        .right-actions {
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            width: 48px;
+            height: 48px;
+            background: var(--btn-bg);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+        
+        .action-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .action-btn span {
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .action-btn:hover {
+            background: var(--btn-hover);
+            border-color: var(--accent-cyan);
+            transform: scale(1.05);
+        }
+        
+        .action-btn.delete:hover {
+            border-color: var(--accent-pink);
+            background: rgba(255, 0, 136, 0.2);
+        }
+        
+        .action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        .action-btn:disabled:hover {
+            transform: none;
+            background: var(--btn-bg);
+            border-color: var(--border-glow);
+        }
+        
+        /* Bottom Build Bar */
+        .build-bar {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+            display: flex;
+            gap: 8px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            backdrop-filter: blur(10px);
+        }
+        
+        .build-piece {
+            width: 56px;
+            height: 56px;
+            background: var(--btn-bg);
+            border: 2px solid var(--border-glow);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .build-piece svg {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .build-piece .hotkey {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+        
+        .build-piece:hover {
+            background: var(--btn-hover);
+            border-color: var(--accent-cyan);
+            transform: translateY(-4px);
+        }
+        
+        .build-piece.active {
+            background: var(--btn-active);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+        
+        /* Help Modal */
+        .help-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .help-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .help-content {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            backdrop-filter: blur(20px);
+        }
+        
+        .help-content h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--accent-cyan);
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+        }
+        
+        .help-content h3 {
+            color: var(--accent-green);
+            margin: 16px 0 8px;
+            font-size: 0.95rem;
+        }
+        
+        .help-content p, .help-content li {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        
+        .help-content ul {
+            padding-left: 20px;
+        }
+        
+        .help-content kbd {
+            background: rgba(0, 200, 255, 0.2);
+            border: 1px solid var(--border-glow);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+        }
+        
+        .close-help {
+            margin-top: 16px;
+            width: 100%;
+            padding: 12px;
+            background: var(--btn-bg);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 6px;
+            color: var(--accent-cyan);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .close-help:hover {
+            background: var(--btn-hover);
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 16px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            backdrop-filter: blur(10px);
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .status-bar.snap-active {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+        
+        .status-bar.collision-warning {
+            border-color: var(--accent-pink);
+            color: var(--accent-pink);
+        }
+        
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .left-controls {
+                left: 8px;
+                transform: translateY(-50%) scale(0.9);
+                transform-origin: left center;
+            }
+            
+            .right-actions {
+                right: 8px;
+            }
+            
+            .action-btn {
+                width: 44px;
+                height: 44px;
+            }
+            
+            .build-piece {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .logo {
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .left-controls {
+                display: none;
+            }
+            
+            .mobile-controls {
+                display: flex !important;
+            }
+        }
+        
+        .mobile-controls {
+            display: none;
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            gap: 8px;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        
+        .mobile-ctrl-group {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            gap: 4px;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <!-- Top Bar -->
+    <div class="ui-layer top-bar">
+        <div class="logo">MAGNA<span>BUILD</span> 3D</div>
+        <button class="help-btn" id="helpBtn">? HELP</button>
+    </div>
+    
+    <!-- Left Controls -->
+    <div class="ui-layer left-controls">
+        <div class="control-panel">
+            <div class="panel-title">Rotation (Y)</div>
+            <div class="control-row">
+                <button class="ctrl-btn" id="rotLeft" title="Q">◀</button>
+                <div class="value-display" id="rotValue">0°</div>
+                <button class="ctrl-btn" id="rotRight" title="E">▶</button>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            <div class="panel-title">Tilt (X)</div>
+            <div class="tilt-grid">
+                <button class="ctrl-btn small tilt-btn" data-tilt="-90">-90</button>
+                <button class="ctrl-btn small tilt-btn" data-tilt="-60">-60</button>
+                <button class="ctrl-btn small tilt-btn" data-tilt="-45">-45</button>
+                <button class="ctrl-btn small tilt-btn" data-tilt="-30">-30</button>
+                <button class="ctrl-btn small tilt-btn active" data-tilt="0">0</button>
+                <button class="ctrl-btn small tilt-btn" data-tilt="30">30</button>
+                <button class="ctrl-btn small tilt-btn" data-tilt="45">45</button>
+                <button class="ctrl-btn small tilt-btn" data-tilt="60">60</button>
+                <button class="ctrl-btn small tilt-btn" data-tilt="90">90</button>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            <div class="panel-title">Height</div>
+            <div class="slider-container">
+                <input type="range" class="slider" id="heightSlider" min="0" max="3" step="0.1" value="0">
+            </div>
+            <div class="value-display" id="heightValue">0 cm</div>
+        </div>
+    </div>
+    
+    <!-- Right Actions -->
+    <div class="ui-layer right-actions">
+        <button class="action-btn" id="addBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>ADD</span>
+        </button>
+        <button class="action-btn" id="dupBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+            </svg>
+            <span>COPY</span>
+        </button>
+        <button class="action-btn delete" id="delBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3,6 5,6 21,6"></polyline>
+                <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+            </svg>
+            <span>DEL</span>
+        </button>
+        <button class="action-btn" id="gridBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+                <line x1="15" y1="3" x2="15" y2="21"></line>
+            </svg>
+            <span>GRID</span>
+        </button>
+    </div>
+    
+    <!-- Build Bar -->
+    <div class="ui-layer build-bar">
+        <div class="build-piece active" data-type="SQUARE" title="Small Square">
+            <span class="hotkey">1</span>
+            <svg viewBox="0 0 40 40" fill="none">
+                <rect x="5" y="5" width="30" height="30" fill="rgba(255,200,50,0.6)" stroke="#ffc832" stroke-width="2"/>
+            </svg>
+        </div>
+        <div class="build-piece" data-type="TRI_EQUIL" title="Equilateral Triangle">
+            <span class="hotkey">2</span>
+            <svg viewBox="0 0 40 40" fill="none">
+                <polygon points="20,5 35,35 5,35" fill="rgba(255,100,100,0.6)" stroke="#ff6464" stroke-width="2"/>
+            </svg>
+        </div>
+        <div class="build-piece" data-type="TRI_ISO" title="Blue Isosceles">
+            <span class="hotkey">3</span>
+            <svg viewBox="0 0 40 40" fill="none">
+                <polygon points="20,8 38,35 2,35" fill="rgba(100,150,255,0.6)" stroke="#6496ff" stroke-width="2"/>
+            </svg>
+        </div>
+        <div class="build-piece" data-type="TRI_TALL" title="Tall Triangle">
+            <span class="hotkey">4</span>
+            <svg viewBox="0 0 40 40" fill="none">
+                <polygon points="20,2 32,38 8,38" fill="rgba(100,255,150,0.6)" stroke="#64ff96" stroke-width="2"/>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Status Bar -->
+    <div class="ui-layer status-bar" id="statusBar">Select a tile or add a new one</div>
+    
+    <!-- Mobile Controls (shown on small screens) -->
+    <div class="ui-layer mobile-controls">
+        <div class="mobile-ctrl-group">
+            <button class="ctrl-btn" id="mRotLeft">◀</button>
+            <button class="ctrl-btn" id="mRotRight">▶</button>
+        </div>
+        <div class="mobile-ctrl-group">
+            <button class="ctrl-btn small tilt-btn" data-tilt="0">0°</button>
+            <button class="ctrl-btn small tilt-btn" data-tilt="45">45°</button>
+            <button class="ctrl-btn small tilt-btn" data-tilt="90">90°</button>
+        </div>
+    </div>
+    
+    <!-- Help Modal -->
+    <div class="help-modal" id="helpModal">
+        <div class="help-content">
+            <h2>📐 How to Use MagnaBuild 3D</h2>
+            
+            <h3>🖱️ Camera Controls (Desktop)</h3>
+            <ul>
+                <li><kbd>Right-click + drag</kbd> - Orbit camera</li>
+                <li><kbd>Scroll wheel</kbd> - Zoom in/out</li>
+                <li><kbd>Middle-click + drag</kbd> or <kbd>Space + drag</kbd> - Pan</li>
+            </ul>
+            
+            <h3>📱 Camera Controls (Mobile)</h3>
+            <ul>
+                <li><strong>One finger on empty space</strong> - Orbit</li>
+                <li><strong>Pinch</strong> - Zoom</li>
+                <li><strong>Two fingers</strong> - Pan</li>
+            </ul>
+            
+            <h3>🧱 Building</h3>
+            <ul>
+                <li>Press <kbd>1</kbd>-<kbd>4</kbd> or tap icons to select piece type</li>
+                <li>Click <strong>ADD</strong> to spawn a new tile</li>
+                <li><strong>Click/tap</strong> a tile to select it</li>
+                <li><strong>Drag</strong> selected tile to move it</li>
+                <li><kbd>Q</kbd>/<kbd>E</kbd> - Rotate 15° left/right</li>
+                <li>Use <strong>Tilt</strong> buttons for wall angles (0°, 30°, 45°, 60°, 90°)</li>
+                <li>Adjust <strong>Height</strong> slider to raise tiles</li>
+            </ul>
+            
+            <h3>🧲 Magnetic Snapping</h3>
+            <ul>
+                <li>Drag tiles near each other to see <strong>green snap preview</strong></li>
+                <li>Release to snap edges together</li>
+                <li>Edges must have matching magnet counts (2↔2, 4↔4)</li>
+                <li>Works for flat, angled, and wall connections!</li>
+            </ul>
+            
+            <h3>⚡ Quick Actions</h3>
+            <ul>
+                <li><kbd>Delete</kbd> or <kbd>Backspace</kbd> - Remove selected tile</li>
+                <li><kbd>D</kbd> - Duplicate selected tile</li>
+                <li><kbd>G</kbd> - Toggle grid</li>
+            </ul>
+            
+            <button class="close-help" id="closeHelp">GOT IT!</button>
+        </div>
+    </div>
+
+<script type="module">
+// ============================================
+// MAGNETIC TILE 3D BLUEPRINT MAKER
+// ============================================
+
+const { 
+    Scene, PerspectiveCamera, WebGLRenderer, 
+    AmbientLight, DirectionalLight,
+    PlaneGeometry, MeshStandardMaterial, Mesh, Group, 
+    BoxGeometry, ExtrudeGeometry, Shape, Path,
+    Vector2, Vector3, Quaternion, Euler, Matrix4, Raycaster,
+    Color, DoubleSide, FrontSide, BackSide,
+    EdgesGeometry, LineBasicMaterial, LineSegments,
+    GridHelper, PCFSoftShadowMap, SRGBColorSpace
+} = THREE;
+
+// ============================================
+// CONSTANTS & CONFIG
+// ============================================
+const CONFIG = {
+    THICKNESS: 0.08,
+    SNAP_DISTANCE: 1.5,          // Distance for snap detection
+    SNAP_DOT_TANGENT: 0.4,       // Tangent alignment threshold (more forgiving for tilted edges)
+    GHOST_PULSE_SPEED: 3,
+    ROTATION_STEP: 15,
+    COLORS: {
+        SQUARE: 0xffc832,
+        TRI_EQUIL: 0xff6464,
+        TRI_ISO: 0x6496ff,
+        TRI_TALL: 0x64ff96
+    }
+};
+
+const TILE_TYPES = {
+    SQUARE: 'SQUARE',
+    TRI_EQUIL: 'TRI_EQUIL',
+    TRI_ISO: 'TRI_ISO',
+    TRI_TALL: 'TRI_TALL'
+};
+
+// ============================================
+// GEOMETRY DEFINITIONS
+// ============================================
+function getVertices(type) {
+    switch(type) {
+        case TILE_TYPES.SQUARE:
+            return [
+                new Vector2(-0.25, -0.25),
+                new Vector2(0.25, -0.25),
+                new Vector2(0.25, 0.25),
+                new Vector2(-0.25, 0.25)
+            ];
+        case TILE_TYPES.TRI_EQUIL:
+            const h1 = Math.sqrt(3) / 2 * 0.5;
+            return [
+                new Vector2(-0.25, -h1/3),
+                new Vector2(0.25, -h1/3),
+                new Vector2(0, h1 * 2/3)
+            ];
+        case TILE_TYPES.TRI_ISO:
+            const halfBase = 0.353553;
+            const h2 = 0.353553;
+            return [
+                new Vector2(-halfBase, -h2/3),
+                new Vector2(halfBase, -h2/3),
+                new Vector2(0, h2 * 2/3)
+            ];
+        case TILE_TYPES.TRI_TALL:
+            const hb = 0.25;
+            const h3 = Math.sqrt(1.0 - 0.0625);
+            return [
+                new Vector2(-hb, -h3/3),
+                new Vector2(hb, -h3/3),
+                new Vector2(0, h3 * 2/3)
+            ];
+    }
+}
+
+function getMagnetCount(type, edgeIndex) {
+    if (type === TILE_TYPES.TRI_TALL) {
+        // Base edge (index 0) has 2 magnets, long sides have 4
+        return edgeIndex === 0 ? 2 : 4;
+    }
+    return 2; // Default: 2 magnets per edge
+}
+
+function getMagnetPositions(magnetCount) {
+    if (magnetCount === 2) return [1/3, 2/3];
+    if (magnetCount === 3) return [1/4, 2/4, 3/4];
+    if (magnetCount === 4) return [1/5, 2/5, 3/5, 4/5];
+    return [0.5];
+}
+
+// ============================================
+// TILE CLASS
+// ============================================
+class Tile {
+    static idCounter = 0;
+    
+    constructor(type) {
+        this.id = ++Tile.idCounter;
+        this.type = type;
+        this.mesh = null;
+        this.ghostMesh = null;
+        this.edges = [];
+        this.connections = [];
+        this.yRotation = 0;
+        this.xTilt = 0;
+        this.heightOffset = 0;
+        
+        this.createMesh();
+        this.computeEdges();
+    }
+    
+    createMesh() {
+        const vertices = getVertices(this.type);
+        const shape = new Shape();
+        shape.moveTo(vertices[0].x, vertices[0].y);
+        for (let i = 1; i < vertices.length; i++) {
+            shape.lineTo(vertices[i].x, vertices[i].y);
+        }
+        shape.closePath();
+        
+        // Main extruded shape - create in XY plane, extrude in Z
+        const extrudeSettings = {
+            depth: CONFIG.THICKNESS,
+            bevelEnabled: false
+        };
+        
+        const geometry = new ExtrudeGeometry(shape, extrudeSettings);
+        // Center the extrusion on Z
+        geometry.translate(0, 0, -CONFIG.THICKNESS / 2);
+        // Rotate to lay flat: Z-up becomes Y-up
+        geometry.rotateX(-Math.PI / 2);
+        
+        // Compute bounding box for proper centering
+        geometry.computeBoundingBox();
+        
+        const color = CONFIG.COLORS[this.type];
+        const material = new MeshStandardMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.85,
+            side: DoubleSide,
+            roughness: 0.3,
+            metalness: 0.1
+        });
+        
+        const mainMesh = new Mesh(geometry, material);
+        mainMesh.castShadow = true;
+        mainMesh.receiveShadow = true;
+        mainMesh.name = 'tileFace';
+        
+        // Create group
+        this.mesh = new Group();
+        this.mesh.add(mainMesh);
+        this.mesh.userData.tile = this;
+        this.mesh.userData.tileId = this.id;
+        
+        // Add frame/edges
+        const edgesGeo = new EdgesGeometry(geometry);
+        const edgesMat = new LineBasicMaterial({ 
+            color: new Color(color).multiplyScalar(0.5),
+            linewidth: 2 
+        });
+        const edgeLines = new LineSegments(edgesGeo, edgesMat);
+        this.mesh.add(edgeLines);
+        
+        // Add magnets
+        this.addMagnets(vertices);
+        
+        // Position so bottom of tile is at y=0 when flat
+        this.mesh.position.y = CONFIG.THICKNESS / 2;
+    }
+    
+    addMagnets(vertices) {
+        const magnetGeo = new BoxGeometry(0.04, 0.02, 0.015);
+        const magnetMat = new MeshStandardMaterial({ color: 0x222222 });
+        
+        for (let i = 0; i < vertices.length; i++) {
+            const v1 = vertices[i];
+            const v2 = vertices[(i + 1) % vertices.length];
+            const magnetCount = getMagnetCount(this.type, i);
+            const positions = getMagnetPositions(magnetCount);
+            
+            const edgeDir = new Vector2().subVectors(v2, v1);
+            edgeDir.normalize();
+            
+            // Normal pointing outward (perpendicular to edge, in 2D - counterclockwise)
+            const normal2D = new Vector2(-edgeDir.y, edgeDir.x);
+            
+            positions.forEach(t => {
+                const pos2D = new Vector2().lerpVectors(v1, v2, t);
+                
+                const magnet = new Mesh(magnetGeo, magnetMat);
+                // In local space after rotation: X stays X, Y (2D) becomes -Z
+                magnet.position.set(pos2D.x, 0, -pos2D.y);
+                
+                // Rotate magnet to align with edge
+                const angle = Math.atan2(-edgeDir.y, edgeDir.x);
+                magnet.rotation.y = angle;
+                
+                this.mesh.add(magnet);
+            });
+        }
+    }
+    
+    computeEdges() {
+        const vertices = getVertices(this.type);
+        this.edges = [];
+        
+        // Compute centroid for determining outward direction
+        let cx = 0, cy = 0;
+        vertices.forEach(v => { cx += v.x; cy += v.y; });
+        cx /= vertices.length;
+        cy /= vertices.length;
+        
+        for (let i = 0; i < vertices.length; i++) {
+            const v1 = vertices[i];
+            const v2 = vertices[(i + 1) % vertices.length];
+            
+            // Edge midpoint in 2D
+            const midX = (v1.x + v2.x) / 2;
+            const midY = (v1.y + v2.y) / 2;
+            
+            // Edge direction in 2D
+            const edgeDirX = v2.x - v1.x;
+            const edgeDirY = v2.y - v1.y;
+            const edgeLen = Math.sqrt(edgeDirX * edgeDirX + edgeDirY * edgeDirY);
+            
+            // Perpendicular (two options: rotate 90° CW or CCW)
+            let normX = -edgeDirY / edgeLen;
+            let normY = edgeDirX / edgeLen;
+            
+            // Check if this normal points outward (away from centroid)
+            const toCenterX = cx - midX;
+            const toCenterY = cy - midY;
+            const dot = normX * toCenterX + normY * toCenterY;
+            if (dot > 0) {
+                // Normal points inward, flip it
+                normX = -normX;
+                normY = -normY;
+            }
+            
+            // Convert to 3D local space (after rotation: X->X, Y->-Z, and tile lies in XZ plane)
+            const a = new Vector3(v1.x, 0, -v1.y);
+            const b = new Vector3(v2.x, 0, -v2.y);
+            const center = new Vector3(midX, 0, -midY);
+            const tangent = new Vector3(edgeDirX / edgeLen, 0, -edgeDirY / edgeLen);
+            const normal = new Vector3(normX, 0, -normY);
+            
+            this.edges.push({
+                index: i,
+                aLocal: a,
+                bLocal: b,
+                centerLocal: center,
+                tangentLocal: tangent,
+                normalLocal: normal,
+                magnetCount: getMagnetCount(this.type, i),
+                length: edgeLen
+            });
+        }
+    }
+    
+    getWorldEdge(edgeIndex) {
+        const edge = this.edges[edgeIndex];
+        
+        // Make sure world matrix is up to date
+        this.mesh.updateMatrixWorld(true);
+        
+        const matrix = this.mesh.matrixWorld;
+        const rotMatrix = new Matrix4().extractRotation(matrix);
+        
+        const a = edge.aLocal.clone().applyMatrix4(matrix);
+        const b = edge.bLocal.clone().applyMatrix4(matrix);
+        const center = edge.centerLocal.clone().applyMatrix4(matrix);
+        const tangent = edge.tangentLocal.clone().applyMatrix4(rotMatrix).normalize();
+        const normal = edge.normalLocal.clone().applyMatrix4(rotMatrix).normalize();
+        
+        return { 
+            a, b, center, tangent, normal, 
+            magnetCount: edge.magnetCount, 
+            index: edgeIndex,
+            length: edge.length,
+            tileId: this.id
+        };
+    }
+    
+    getAllWorldEdges() {
+        this.mesh.updateMatrixWorld(true);
+        return this.edges.map((_, i) => this.getWorldEdge(i));
+    }
+    
+    setPosition(pos) {
+        this.mesh.position.copy(pos);
+        this.mesh.updateMatrixWorld(true);
+    }
+    
+    updateTransform() {
+        // Apply Y rotation then X tilt
+        const euler = new Euler(
+            THREE.MathUtils.degToRad(this.xTilt),
+            THREE.MathUtils.degToRad(this.yRotation),
+            0,
+            'YXZ'
+        );
+        this.mesh.quaternion.setFromEuler(euler);
+        
+        // Calculate Y position so tile sits on ground
+        // When flat, bottom of tile should be at y=0
+        // The tile's local origin is at y=0 (center of thickness)
+        let baseY = CONFIG.THICKNESS / 2 + this.heightOffset;
+        
+        // When tilted, we need to adjust Y so the lowest point touches ground
+        if (Math.abs(this.xTilt) > 1) {
+            const tiltRad = THREE.MathUtils.degToRad(this.xTilt);
+            const cosTilt = Math.cos(tiltRad);
+            const sinTilt = Math.abs(Math.sin(tiltRad));
+            
+            // Find the extent of the tile in the Z direction (before rotation)
+            const vertices = getVertices(this.type);
+            let minZ = Infinity, maxZ = -Infinity;
+            vertices.forEach(v => {
+                const z = -v.y; // In local 3D, Y(2D) -> -Z(3D)
+                minZ = Math.min(minZ, z);
+                maxZ = Math.max(maxZ, z);
+            });
+            
+            // After X-tilt rotation, Z moves into Y
+            // New Y contribution from Z: z * sin(tilt)
+            // The thickness also rotates
+            const halfThick = CONFIG.THICKNESS / 2;
+            
+            // Compute lowest Y after rotation
+            const zExtent = Math.max(Math.abs(minZ), Math.abs(maxZ));
+            baseY = sinTilt * zExtent + cosTilt * halfThick + this.heightOffset;
+        }
+        
+        this.mesh.position.y = baseY;
+        this.mesh.updateMatrixWorld(true);
+    }
+    
+    highlight(on) {
+        const mainMesh = this.mesh.children[0];
+        if (mainMesh && mainMesh.material) {
+            mainMesh.material.emissive = on ? new Color(0x00ffff) : new Color(0x000000);
+            mainMesh.material.emissiveIntensity = on ? 0.3 : 0;
+        }
+    }
+    
+    clone() {
+        const newTile = new Tile(this.type);
+        newTile.yRotation = this.yRotation;
+        newTile.xTilt = this.xTilt;
+        newTile.heightOffset = this.heightOffset;
+        newTile.mesh.position.copy(this.mesh.position);
+        newTile.mesh.position.x += 0.3;
+        newTile.mesh.position.z += 0.3;
+        newTile.updateTransform();
+        return newTile;
+    }
+}
+
+// ============================================
+// GHOST PREVIEW
+// ============================================
+class GhostPreview {
+    constructor() {
+        this.mesh = null;
+        this.active = false;
+        this.valid = true;
+        this.time = 0;
+    }
+    
+    createForTile(tile) {
+        if (this.mesh) {
+            this.mesh.parent?.remove(this.mesh);
+        }
+        
+        // Clone the tile's geometry
+        const vertices = getVertices(tile.type);
+        const shape = new Shape();
+        shape.moveTo(vertices[0].x, vertices[0].y);
+        for (let i = 1; i < vertices.length; i++) {
+            shape.lineTo(vertices[i].x, vertices[i].y);
+        }
+        shape.closePath();
+        
+        const geometry = new ExtrudeGeometry(shape, { depth: CONFIG.THICKNESS, bevelEnabled: false });
+        geometry.translate(0, 0, -CONFIG.THICKNESS / 2);
+        geometry.rotateX(-Math.PI / 2);
+        
+        this.mainMaterial = new MeshStandardMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.4,
+            side: DoubleSide,
+            depthWrite: false
+        });
+        
+        const ghostMesh = new Mesh(geometry, this.mainMaterial);
+        
+        // Add wireframe
+        const edgesGeo = new EdgesGeometry(geometry);
+        this.wireMaterial = new LineBasicMaterial({ 
+            color: 0x00ff88, 
+            linewidth: 2, 
+            transparent: true, 
+            opacity: 0.8 
+        });
+        const wireframe = new LineSegments(edgesGeo, this.wireMaterial);
+        
+        this.mesh = new Group();
+        this.mesh.add(ghostMesh);
+        this.mesh.add(wireframe);
+        this.mesh.visible = false;
+        this.mesh.renderOrder = 999;
+        
+        return this.mesh;
+    }
+    
+    show(position, quaternion, isValid = true) {
+        if (!this.mesh) return;
+        this.mesh.position.copy(position);
+        this.mesh.quaternion.copy(quaternion);
+        this.mesh.visible = true;
+        this.mesh.updateMatrixWorld(true);
+        this.active = true;
+        this.valid = isValid;
+        
+        // Set color based on validity
+        const color = isValid ? 0x00ff88 : 0xff4444;
+        this.mainMaterial.color.setHex(color);
+        this.wireMaterial.color.setHex(color);
+    }
+    
+    hide() {
+        if (this.mesh) {
+            this.mesh.visible = false;
+        }
+        this.active = false;
+        this.valid = true;
+    }
+    
+    update(dt) {
+        if (!this.active || !this.mesh) return;
+        this.time += dt * CONFIG.GHOST_PULSE_SPEED;
+        const baseOpacity = this.valid ? 0.3 : 0.4;
+        const pulseAmount = this.valid ? 0.25 : 0.15;
+        const opacity = baseOpacity + pulseAmount * Math.sin(this.time);
+        this.mainMaterial.opacity = opacity;
+    }
+}
+
+// ============================================
+// SNAPPING SYSTEM
+// ============================================
+class SnapSystem {
+    constructor() {
+        this.snapResult = null;
+        this.lastCollisionState = false;
+    }
+    
+    findBestSnap(movingTile, allTiles) {
+        movingTile.mesh.updateMatrixWorld(true);
+        const movingEdges = movingTile.getAllWorldEdges();
+        let bestSnap = null;
+        let bestScore = Infinity;
+        
+        for (const otherTile of allTiles) {
+            if (otherTile.id === movingTile.id) continue;
+            
+            otherTile.mesh.updateMatrixWorld(true);
+            const otherEdges = otherTile.getAllWorldEdges();
+            
+            // Get static tile's face normal (local Y transformed to world)
+            const staticFaceNormal = new Vector3(0, 1, 0).applyQuaternion(otherTile.mesh.quaternion).normalize();
+            
+            for (const movingEdge of movingEdges) {
+                for (const otherEdge of otherEdges) {
+                    // Check magnet/length compatibility
+                    const compatResult = this.checkEdgeCompatibility(movingEdge, otherEdge);
+                    if (!compatResult.compatible) continue;
+                    
+                    // Distance between edge centers (or partial center for partial snaps)
+                    let targetCenter = otherEdge.center.clone();
+                    let distanceCheckCenter = movingEdge.center.clone();
+                    
+                    if (compatResult.partial && !compatResult.inverse) {
+                        // Normal partial: small edge snapping to half of big edge
+                        // Offset the target to the half-center of the static edge
+                        const halfDir = otherEdge.tangent.clone().multiplyScalar(otherEdge.length * 0.25);
+                        if (compatResult.whichHalf === 'first') {
+                            targetCenter.sub(halfDir);
+                        } else {
+                            targetCenter.add(halfDir);
+                        }
+                    } else if (compatResult.partial && compatResult.inverse) {
+                        // Inverse partial: big edge snapping to small edge
+                        // Use half-center of moving edge for distance check
+                        const halfDir = movingEdge.tangent.clone().multiplyScalar(movingEdge.length * 0.25);
+                        if (compatResult.whichHalf === 'first') {
+                            distanceCheckCenter.sub(halfDir);
+                        } else {
+                            distanceCheckCenter.add(halfDir);
+                        }
+                    }
+                    
+                    const dist = distanceCheckCenter.distanceTo(targetCenter);
+                    if (dist > CONFIG.SNAP_DISTANCE) continue;
+                    
+                    // Tangent alignment (parallel or anti-parallel)
+                    const tangentDot = Math.abs(movingEdge.tangent.dot(otherEdge.tangent));
+                    if (tangentDot < CONFIG.SNAP_DOT_TANGENT) continue;
+                    
+                    // Score: prefer closer edges and better tangent alignment
+                    const score = dist * 2 + (1 - tangentDot);
+                    
+                    if (score < bestScore) {
+                        bestScore = score;
+                        bestSnap = {
+                            movingEdge,
+                            staticEdge: otherEdge,
+                            movingTile,
+                            staticTile: otherTile,
+                            staticFaceNormal,
+                            distance: dist,
+                            score,
+                            partial: compatResult.partial,
+                            inverse: compatResult.inverse || false,
+                            whichHalf: compatResult.whichHalf,
+                            targetCenter
+                        };
+                    }
+                }
+            }
+        }
+        
+        this.snapResult = bestSnap;
+        return bestSnap;
+    }
+    
+    // Check if two edges are compatible for snapping
+    checkEdgeCompatibility(movingEdge, staticEdge) {
+        // Exact match: same length, same magnet count
+        const lengthRatio = movingEdge.length / staticEdge.length;
+        
+        if (lengthRatio > 0.85 && lengthRatio < 1.18) {
+            // Similar lengths - require same magnet count
+            if (movingEdge.magnetCount === staticEdge.magnetCount) {
+                return { compatible: true, partial: false };
+            }
+            return { compatible: false };
+        }
+        
+        // Partial snap: moving edge is ~half the static edge length
+        // This allows 2-magnet edges to snap to half of 4-magnet edges
+        if (lengthRatio > 0.4 && lengthRatio < 0.6) {
+            // Moving edge is about half the static edge
+            // Check magnet compatibility: 2 magnets can snap to half of 4-magnet edge
+            if (movingEdge.magnetCount === 2 && staticEdge.magnetCount === 4) {
+                // Determine which half based on current position
+                const toMoving = new Vector3().subVectors(movingEdge.center, staticEdge.center);
+                const alongTangent = toMoving.dot(staticEdge.tangent);
+                const whichHalf = alongTangent < 0 ? 'first' : 'second';
+                return { compatible: true, partial: true, whichHalf, inverse: false };
+            }
+        }
+        
+        // Inverse partial: moving edge is ~double the static edge length
+        // The moving edge's half should align with the full static edge
+        if (lengthRatio > 1.7 && lengthRatio < 2.5) {
+            if (staticEdge.magnetCount === 2 && movingEdge.magnetCount === 4) {
+                // Determine which half of the MOVING edge to use
+                // Use the half that's closer to the static edge
+                const toStatic = new Vector3().subVectors(staticEdge.center, movingEdge.center);
+                const alongTangent = toStatic.dot(movingEdge.tangent);
+                // If static is in positive tangent direction, use second half; otherwise first
+                const whichHalf = alongTangent > 0 ? 'second' : 'first';
+                return { compatible: true, partial: true, whichHalf, inverse: true };
+            }
+        }
+        
+        return { compatible: false };
+    }
+    
+    computeSnapTransform(snap, movingTile) {
+        if (!snap) return null;
+        
+        const { movingEdge, staticEdge, staticFaceNormal, partial, inverse, whichHalf, targetCenter } = snap;
+        
+        // Get the local edge info
+        const localEdge = movingTile.edges[movingEdge.index];
+        
+        // Get current tile orientation
+        const currentQuat = movingTile.mesh.quaternion.clone();
+        const movingFaceNormal = new Vector3(0, 1, 0).applyQuaternion(currentQuat).normalize();
+        
+        // Check if tiles are coplanar or perpendicular
+        const faceAlignment = Math.abs(movingFaceNormal.dot(staticFaceNormal));
+        
+        // Check if both tiles are flat (face normals pointing mostly up/down)
+        const movingIsFlat = Math.abs(movingFaceNormal.y) > 0.9;
+        const staticIsFlat = Math.abs(staticFaceNormal.y) > 0.9;
+        
+        let newQuat;
+        
+        if (faceAlignment > 0.7 && !movingIsFlat && !staticIsFlat) {
+            // COPLANAR TILTED TILES (both are walls facing similar direction)
+            // Use full 3D alignment
+            
+            const localTangent = localEdge.tangentLocal.clone().normalize();
+            const localNormal = localEdge.normalLocal.clone().normalize();
+            const localBinormal = new Vector3().crossVectors(localTangent, localNormal).normalize();
+            
+            const tgtTangent = staticEdge.tangent.clone().normalize();
+            const tgtNormal = staticEdge.normal.clone().negate().normalize();
+            const tgtBinormal = new Vector3().crossVectors(tgtTangent, tgtNormal).normalize();
+            
+            const srcMatrix = new Matrix4().makeBasis(localTangent, localNormal, localBinormal);
+            const tgtMatrix = new Matrix4().makeBasis(tgtTangent, tgtNormal, tgtBinormal);
+            
+            const srcMatrixInv = srcMatrix.clone().invert();
+            const rotMatrix = tgtMatrix.clone().multiply(srcMatrixInv);
+            newQuat = new Quaternion().setFromRotationMatrix(rotMatrix);
+            
+            // Check if normals oppose properly, try flipped tangent if not
+            const resultNormal = localNormal.clone().applyQuaternion(newQuat);
+            if (resultNormal.dot(staticEdge.normal) > -0.5) {
+                const altTgtTangent = tgtTangent.clone().negate();
+                const altTgtBinormal = new Vector3().crossVectors(altTgtTangent, tgtNormal).normalize();
+                const altTgtMatrix = new Matrix4().makeBasis(altTgtTangent, tgtNormal, altTgtBinormal);
+                const altRotMatrix = altTgtMatrix.clone().multiply(srcMatrixInv);
+                const altQuat = new Quaternion().setFromRotationMatrix(altRotMatrix);
+                
+                const altResultNormal = localNormal.clone().applyQuaternion(altQuat);
+                if (altResultNormal.dot(staticEdge.normal) < resultNormal.dot(staticEdge.normal)) {
+                    newQuat = altQuat;
+                }
+            }
+        } else {
+            // FLAT TILES or PERPENDICULAR TILES
+            // Use Y-axis rotation only, preserve current tilt
+            
+            // Project tangents onto XZ plane
+            const moveTangentXZ = new Vector3(movingEdge.tangent.x, 0, movingEdge.tangent.z);
+            const staticTangentXZ = new Vector3(staticEdge.tangent.x, 0, staticEdge.tangent.z);
+            
+            let yRotationDelta = 0;
+            
+            if (moveTangentXZ.length() > 0.1 && staticTangentXZ.length() > 0.1) {
+                moveTangentXZ.normalize();
+                staticTangentXZ.normalize();
+                
+                const currentAngle = Math.atan2(moveTangentXZ.x, moveTangentXZ.z);
+                
+                // For edge alignment, we need normals to oppose
+                const moveNormalXZ = new Vector3(movingEdge.normal.x, 0, movingEdge.normal.z);
+                const staticNormalXZ = new Vector3(staticEdge.normal.x, 0, staticEdge.normal.z);
+                
+                if (moveNormalXZ.length() > 0.1 && staticNormalXZ.length() > 0.1) {
+                    moveNormalXZ.normalize();
+                    staticNormalXZ.normalize();
+                    
+                    const targetNormalXZ = staticNormalXZ.clone().negate();
+                    
+                    const currentNormalAngle = Math.atan2(moveNormalXZ.x, moveNormalXZ.z);
+                    const targetNormalAngle = Math.atan2(targetNormalXZ.x, targetNormalXZ.z);
+                    
+                    yRotationDelta = targetNormalAngle - currentNormalAngle;
+                } else {
+                    const targetAngle1 = Math.atan2(staticTangentXZ.x, staticTangentXZ.z);
+                    let delta1 = targetAngle1 - currentAngle;
+                    while (delta1 > Math.PI) delta1 -= 2 * Math.PI;
+                    while (delta1 < -Math.PI) delta1 += 2 * Math.PI;
+                    
+                    const targetAngle2 = Math.atan2(-staticTangentXZ.x, -staticTangentXZ.z);
+                    let delta2 = targetAngle2 - currentAngle;
+                    while (delta2 > Math.PI) delta2 -= 2 * Math.PI;
+                    while (delta2 < -Math.PI) delta2 += 2 * Math.PI;
+                    
+                    yRotationDelta = Math.abs(delta1) < Math.abs(delta2) ? delta1 : delta2;
+                }
+                
+                while (yRotationDelta > Math.PI) yRotationDelta -= 2 * Math.PI;
+                while (yRotationDelta < -Math.PI) yRotationDelta += 2 * Math.PI;
+            } else {
+                const moveFaceXZ = new Vector3(movingFaceNormal.x, 0, movingFaceNormal.z);
+                const staticFaceXZ = new Vector3(staticFaceNormal.x, 0, staticFaceNormal.z);
+                
+                if (moveFaceXZ.length() > 0.1 && staticFaceXZ.length() > 0.1) {
+                    moveFaceXZ.normalize();
+                    staticFaceXZ.normalize();
+                    
+                    const currentAngle = Math.atan2(moveFaceXZ.x, moveFaceXZ.z);
+                    const targetAngle = Math.atan2(staticFaceXZ.x, staticFaceXZ.z);
+                    yRotationDelta = targetAngle - currentAngle;
+                    while (yRotationDelta > Math.PI) yRotationDelta -= 2 * Math.PI;
+                    while (yRotationDelta < -Math.PI) yRotationDelta += 2 * Math.PI;
+                }
+            }
+            
+            const deltaQuat = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), yRotationDelta);
+            newQuat = deltaQuat.multiply(currentQuat);
+        }
+        
+        // Determine which point on the moving edge to align with the target
+        let localCenterToUse = localEdge.centerLocal.clone();
+        let snapTarget = staticEdge.center.clone();
+        
+        if (partial && !inverse) {
+            // Normal partial: small edge to half of big edge
+            // Use the pre-computed targetCenter (half of static edge)
+            snapTarget = targetCenter.clone();
+        } else if (partial && inverse) {
+            // Inverse partial: half of big edge to small edge
+            // Determine which half is closer using CURRENT positions (before snap rotation)
+            // This matches what the user sees when dragging
+            
+            const currentHalfOffset = movingEdge.tangent.clone().multiplyScalar(movingEdge.length * 0.25);
+            const firstHalfCenter = movingEdge.center.clone().sub(currentHalfOffset);
+            const secondHalfCenter = movingEdge.center.clone().add(currentHalfOffset);
+            
+            const distFirst = firstHalfCenter.distanceTo(staticEdge.center);
+            const distSecond = secondHalfCenter.distanceTo(staticEdge.center);
+            
+            // Use the closer half
+            const halfOffset = localEdge.tangentLocal.clone().multiplyScalar(localEdge.length * 0.25);
+            
+            if (distFirst < distSecond) {
+                localCenterToUse = localEdge.centerLocal.clone().sub(halfOffset);
+            } else {
+                localCenterToUse = localEdge.centerLocal.clone().add(halfOffset);
+            }
+        }
+        
+        // Compute final position
+        const rotatedLocalCenter = localCenterToUse.clone().applyQuaternion(newQuat);
+        const newPos = snapTarget.clone().sub(rotatedLocalCenter);
+        
+        return { position: newPos, quaternion: newQuat };
+    }
+    
+    // Check if a tile at given position/rotation would collide with other tiles
+    checkCollision(movingTile, newPos, newQuat, allTiles, snapTargetId) {
+        // Get the moving tile's vertices transformed to the candidate position
+        const vertices = getVertices(movingTile.type);
+        const worldVertices = vertices.map(v => {
+            const local = new Vector3(v.x, 0, -v.y);
+            local.applyQuaternion(newQuat);
+            local.add(newPos);
+            return local;
+        });
+        
+        // Get moving tile's face normal and center
+        const movingFaceNormal = new Vector3(0, 1, 0).applyQuaternion(newQuat).normalize();
+        const movingCenter = newPos.clone();
+        
+        // Check against all other tiles (except the snap target and self)
+        for (const otherTile of allTiles) {
+            if (otherTile.id === movingTile.id) continue;
+            if (otherTile.id === snapTargetId) continue;
+            
+            otherTile.mesh.updateMatrixWorld(true);
+            
+            // Get other tile's info
+            const otherVertices = getVertices(otherTile.type);
+            const otherWorldVertices = otherVertices.map(v => {
+                const local = new Vector3(v.x, 0, -v.y);
+                local.applyQuaternion(otherTile.mesh.quaternion);
+                local.add(otherTile.mesh.position);
+                return local;
+            });
+            
+            const otherFaceNormal = new Vector3(0, 1, 0).applyQuaternion(otherTile.mesh.quaternion).normalize();
+            const otherCenter = otherTile.mesh.position.clone();
+            
+            // Check if tiles are coplanar (face normals aligned)
+            const faceAlignment = Math.abs(movingFaceNormal.dot(otherFaceNormal));
+            
+            // Only check collision for very coplanar tiles (threshold 0.98)
+            if (faceAlignment > 0.98) {
+                // Additional check: tiles must be at similar positions along their shared normal
+                // Project centers onto the face normal to check if they're in the same plane
+                const movingPlanePos = movingCenter.dot(movingFaceNormal);
+                const otherPlanePos = otherCenter.dot(movingFaceNormal);
+                const planeDistance = Math.abs(movingPlanePos - otherPlanePos);
+                
+                // Only check overlap if tiles are actually in similar planes (within reasonable distance)
+                if (planeDistance < 0.15) {
+                    if (this.checkPolygonOverlap(worldVertices, otherWorldVertices, movingFaceNormal)) {
+                        return true;
+                    }
+                }
+            }
+            // For non-coplanar tiles (different orientations), no collision check needed
+            // They can only meet at edges, which is valid
+        }
+        
+        return false;
+    }
+    
+    // Check if two 2D polygons overlap when projected along a normal
+    checkPolygonOverlap(verts1, verts2, normal) {
+        // Determine projection plane based on which axis normal is most aligned with
+        let projX, projY;
+        const absN = new Vector3(Math.abs(normal.x), Math.abs(normal.y), Math.abs(normal.z));
+        
+        if (absN.y >= absN.x && absN.y >= absN.z) {
+            projX = 'x'; projY = 'z';
+        } else if (absN.x >= absN.z) {
+            projX = 'y'; projY = 'z';
+        } else {
+            projX = 'x'; projY = 'y';
+        }
+        
+        const poly1 = verts1.map(v => ({ x: v[projX], y: v[projY] }));
+        const poly2 = verts2.map(v => ({ x: v[projX], y: v[projY] }));
+        
+        // Shrink polygons more to allow edge-to-edge contact without false positives
+        const shrink1 = this.shrinkPolygon(poly1, 0.04);
+        const shrink2 = this.shrinkPolygon(poly2, 0.04);
+        
+        // Check if any vertex of poly1 is inside poly2
+        for (const p of shrink1) {
+            if (this.pointInPolygon(p, shrink2)) return true;
+        }
+        
+        // Check if any vertex of poly2 is inside poly1
+        for (const p of shrink2) {
+            if (this.pointInPolygon(p, shrink1)) return true;
+        }
+        
+        // Check edge intersections
+        for (let i = 0; i < shrink1.length; i++) {
+            const a1 = shrink1[i];
+            const a2 = shrink1[(i + 1) % shrink1.length];
+            for (let j = 0; j < shrink2.length; j++) {
+                const b1 = shrink2[j];
+                const b2 = shrink2[(j + 1) % shrink2.length];
+                if (this.lineSegmentsIntersect(a1, a2, b1, b2)) return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    shrinkPolygon(poly, amount) {
+        // Find centroid
+        let cx = 0, cy = 0;
+        for (const p of poly) { cx += p.x; cy += p.y; }
+        cx /= poly.length; cy /= poly.length;
+        
+        // Shrink each vertex toward centroid
+        return poly.map(p => {
+            const dx = p.x - cx;
+            const dy = p.y - cy;
+            const len = Math.sqrt(dx*dx + dy*dy);
+            if (len < 0.001) return { x: p.x, y: p.y };
+            const shrinkLen = Math.max(0, len - amount);
+            return {
+                x: cx + dx * shrinkLen / len,
+                y: cy + dy * shrinkLen / len
+            };
+        });
+    }
+    
+    pointInPolygon(point, polygon) {
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            const xi = polygon[i].x, yi = polygon[i].y;
+            const xj = polygon[j].x, yj = polygon[j].y;
+            if (((yi > point.y) !== (yj > point.y)) &&
+                (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi)) {
+                inside = !inside;
+            }
+        }
+        return inside;
+    }
+    
+    lineSegmentsIntersect(a1, a2, b1, b2) {
+        const d1 = (b2.x - b1.x) * (a1.y - b1.y) - (b2.y - b1.y) * (a1.x - b1.x);
+        const d2 = (b2.x - b1.x) * (a2.y - b1.y) - (b2.y - b1.y) * (a2.x - b1.x);
+        const d3 = (a2.x - a1.x) * (b1.y - a1.y) - (a2.y - a1.y) * (b1.x - a1.x);
+        const d4 = (a2.x - a1.x) * (b2.y - a1.y) - (a2.y - a1.y) * (b2.x - a1.x);
+        
+        if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+            ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
+            return true;
+        }
+        return false;
+    }
+}
+
+// ============================================
+// APP STATE
+// ============================================
+const state = {
+    tiles: [],
+    selectedTileId: null,
+    activeBuildType: TILE_TYPES.SQUARE,
+    isDragging: false,
+    dragPlane: null,
+    dragOffset: new Vector3(),
+    gridVisible: true
+};
+
+// ============================================
+// THREE.JS SETUP
+// ============================================
+let scene, camera, renderer;
+let raycaster, pointer;
+let groundPlane, gridHelper;
+let ghost;
+let snapSystem;
+let clock;
+
+function initThree() {
+    // Scene
+    scene = new Scene();
+    scene.background = new Color(0x0a0e17);
+    
+    // Camera
+    camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(3, 4, 5);
+    camera.lookAt(0, 0, 0);
+    
+    // Renderer
+    renderer = new WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = PCFSoftShadowMap;
+    renderer.outputColorSpace = SRGBColorSpace;
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+    
+    // Lights
+    const ambient = new AmbientLight(0xffffff, 0.6);
+    scene.add(ambient);
+    
+    const dirLight = new DirectionalLight(0xffffff, 1.0);
+    dirLight.position.set(5, 10, 7);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = 50;
+    dirLight.shadow.camera.left = -10;
+    dirLight.shadow.camera.right = 10;
+    dirLight.shadow.camera.top = 10;
+    dirLight.shadow.camera.bottom = -10;
+    scene.add(dirLight);
+    
+    // Ground plane
+    const groundGeo = new PlaneGeometry(20, 20);
+    const groundMat = new MeshStandardMaterial({ 
+        color: 0x1a2030,
+        roughness: 0.9
+    });
+    groundPlane = new Mesh(groundGeo, groundMat);
+    groundPlane.rotation.x = -Math.PI / 2;
+    groundPlane.receiveShadow = true;
+    scene.add(groundPlane);
+    
+    // Grid
+    gridHelper = new GridHelper(20, 40, 0x2a3a50, 0x1a2530);
+    gridHelper.position.y = 0.001;
+    scene.add(gridHelper);
+    
+    // Raycaster
+    raycaster = new Raycaster();
+    pointer = new Vector2();
+    
+    // Ghost preview
+    ghost = new GhostPreview();
+    
+    // Snap system
+    snapSystem = new SnapSystem();
+    
+    // Clock
+    clock = new THREE.Clock();
+}
+
+// ============================================
+// CAMERA CONTROLS
+// ============================================
+let cameraControls = {
+    target: new Vector3(0, 0, 0),
+    spherical: { radius: 7, phi: Math.PI / 4, theta: Math.PI / 4 },
+    isPanning: false,
+    isOrbiting: false,
+    lastPointer: { x: 0, y: 0 },
+    touches: []
+};
+
+function updateCameraFromSpherical() {
+    const { radius, phi, theta } = cameraControls.spherical;
+    camera.position.x = cameraControls.target.x + radius * Math.sin(phi) * Math.cos(theta);
+    camera.position.y = cameraControls.target.y + radius * Math.cos(phi);
+    camera.position.z = cameraControls.target.z + radius * Math.sin(phi) * Math.sin(theta);
+    camera.lookAt(cameraControls.target);
+}
+
+// ============================================
+// INPUT HANDLING
+// ============================================
+let pointerDown = false;
+let pointerButton = -1;
+let spacePressed = false;
+let draggedTile = null;
+
+function getPointerPos(e) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    return {
+        x: ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        y: -((e.clientY - rect.top) / rect.height) * 2 + 1
+    };
+}
+
+function raycastTiles(pos) {
+    pointer.set(pos.x, pos.y);
+    raycaster.setFromCamera(pointer, camera);
+    
+    // Update all tile matrices before raycasting
+    state.tiles.forEach(t => t.mesh.updateMatrixWorld(true));
+    
+    // Collect all meshes (not groups) for raycasting
+    const meshes = [];
+    state.tiles.forEach(tile => {
+        tile.mesh.traverse(child => {
+            if (child.isMesh) {
+                child.userData.parentTile = tile;
+                meshes.push(child);
+            }
+        });
+    });
+    
+    const intersects = raycaster.intersectObjects(meshes, false);
+    
+    if (intersects.length > 0) {
+        const hit = intersects[0];
+        const tile = hit.object.userData.parentTile;
+        if (tile) {
+            return { tile, point: hit.point };
+        }
+    }
+    return null;
+}
+
+function raycastGround(pos) {
+    pointer.set(pos.x, pos.y);
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObject(groundPlane);
+    if (intersects.length > 0) {
+        return intersects[0].point;
+    }
+    return null;
+}
+
+function selectTile(tile) {
+    // Deselect previous
+    if (state.selectedTileId) {
+        const prev = state.tiles.find(t => t.id === state.selectedTileId);
+        if (prev) prev.highlight(false);
+    }
+    
+    state.selectedTileId = tile ? tile.id : null;
+    
+    if (tile) {
+        tile.highlight(true);
+        updateUIForSelection(tile);
+        updateStatus(`Selected ${tile.type.replace('_', ' ')}`);
+    } else {
+        updateUIForSelection(null);
+        updateStatus('Click a tile to select, or add a new one');
+    }
+    
+    // Update button states
+    document.getElementById('dupBtn').disabled = !tile;
+    document.getElementById('delBtn').disabled = !tile;
+}
+
+function getSelectedTile() {
+    return state.tiles.find(t => t.id === state.selectedTileId) || null;
+}
+
+// ============================================
+// POINTER EVENTS
+// ============================================
+function onPointerDown(e) {
+    e.preventDefault();
+    pointerDown = true;
+    pointerButton = e.button;
+    
+    const pos = getPointerPos(e);
+    cameraControls.lastPointer = { x: e.clientX, y: e.clientY };
+    
+    if (e.button === 0 && !spacePressed) {
+        // Left click - select or start drag
+        const hit = raycastTiles(pos);
+        if (hit) {
+            selectTile(hit.tile);
+            draggedTile = hit.tile;
+            state.isDragging = true;
+            
+            // Calculate drag offset (difference between tile pos and ground hit in XZ)
+            const groundHit = raycastGround(pos);
+            if (groundHit) {
+                state.dragOffset.set(
+                    hit.tile.mesh.position.x - groundHit.x,
+                    0,
+                    hit.tile.mesh.position.z - groundHit.z
+                );
+            } else {
+                state.dragOffset.set(0, 0, 0);
+            }
+            
+            // Create ghost for snap preview
+            const ghostMesh = ghost.createForTile(hit.tile);
+            scene.add(ghostMesh);
+        } else {
+            selectTile(null);
+        }
+    } else if (e.button === 2 || (e.button === 0 && spacePressed)) {
+        // Right click or space+left - orbit
+        cameraControls.isOrbiting = true;
+    } else if (e.button === 1) {
+        // Middle click - pan
+        cameraControls.isPanning = true;
+    }
+}
+
+function onPointerMove(e) {
+    const pos = getPointerPos(e);
+    const dx = e.clientX - cameraControls.lastPointer.x;
+    const dy = e.clientY - cameraControls.lastPointer.y;
+    
+    if (state.isDragging && draggedTile) {
+        // Drag tile
+        const groundHit = raycastGround(pos);
+        if (groundHit) {
+            // Update XZ position only, keeping the current Y
+            draggedTile.mesh.position.x = groundHit.x + state.dragOffset.x;
+            draggedTile.mesh.position.z = groundHit.z + state.dragOffset.z;
+            draggedTile.mesh.updateMatrixWorld(true);
+            
+            // Check for snapping
+            const snap = snapSystem.findBestSnap(draggedTile, state.tiles);
+            if (snap) {
+                const snapTransform = snapSystem.computeSnapTransform(snap, draggedTile);
+                if (snapTransform) {
+                    // Check for collision with other tiles at snap position
+                    const hasCollision = snapSystem.checkCollision(
+                        draggedTile, 
+                        snapTransform.position, 
+                        snapTransform.quaternion, 
+                        state.tiles,
+                        snap.staticTile.id
+                    );
+                    
+                    ghost.show(snapTransform.position, snapTransform.quaternion, !hasCollision);
+                    
+                    if (hasCollision) {
+                        updateStatus('⚠️ Collision detected - cannot snap here', false);
+                    } else {
+                        updateStatus('🧲 Snap available - release to connect!', true);
+                    }
+                } else {
+                    ghost.hide();
+                    updateStatus('Dragging...');
+                }
+            } else {
+                ghost.hide();
+                updateStatus('Dragging...');
+            }
+        }
+    } else if (cameraControls.isOrbiting) {
+        // Orbit camera
+        cameraControls.spherical.theta -= dx * 0.01;
+        cameraControls.spherical.phi += dy * 0.01;
+        cameraControls.spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraControls.spherical.phi));
+        updateCameraFromSpherical();
+    } else if (cameraControls.isPanning) {
+        // Pan camera
+        const panSpeed = 0.01 * cameraControls.spherical.radius;
+        const right = new Vector3();
+        const up = new Vector3(0, 1, 0);
+        camera.getWorldDirection(right);
+        right.crossVectors(up, right).normalize();
+        
+        cameraControls.target.addScaledVector(right, -dx * panSpeed);
+        cameraControls.target.y += dy * panSpeed;
+        updateCameraFromSpherical();
+    }
+    
+    cameraControls.lastPointer = { x: e.clientX, y: e.clientY };
+}
+
+function onPointerUp(e) {
+    if (state.isDragging && draggedTile) {
+        // Check if we should snap - only if ghost is active AND valid (no collision)
+        if (ghost.active && ghost.valid && snapSystem.snapResult) {
+            const snapTransform = snapSystem.computeSnapTransform(snapSystem.snapResult, draggedTile);
+            if (snapTransform) {
+                // Double-check collision before committing
+                const hasCollision = snapSystem.checkCollision(
+                    draggedTile,
+                    snapTransform.position,
+                    snapTransform.quaternion,
+                    state.tiles,
+                    snapSystem.snapResult.staticTile.id
+                );
+                
+                if (!hasCollision) {
+                    draggedTile.mesh.position.copy(snapTransform.position);
+                    draggedTile.mesh.quaternion.copy(snapTransform.quaternion);
+                    draggedTile.mesh.updateMatrixWorld(true);
+                    
+                    // Extract rotation values from quaternion (YXZ order: Y first, then X tilt)
+                    const euler = new Euler().setFromQuaternion(snapTransform.quaternion, 'YXZ');
+                    draggedTile.yRotation = Math.round(THREE.MathUtils.radToDeg(euler.y));
+                    draggedTile.xTilt = Math.round(THREE.MathUtils.radToDeg(euler.x));
+                    
+                    // Normalize yRotation to 0-360 range
+                    while (draggedTile.yRotation < 0) draggedTile.yRotation += 360;
+                    while (draggedTile.yRotation >= 360) draggedTile.yRotation -= 360;
+                    
+                    // Clamp xTilt to valid values
+                    draggedTile.xTilt = Math.max(0, Math.min(90, Math.abs(draggedTile.xTilt)));
+                    
+                    updateUIForSelection(draggedTile);
+                    updateStatus('✓ Snapped!');
+                } else {
+                    updateStatus('Cannot snap - collision detected');
+                }
+            }
+        }
+        
+        ghost.hide();
+        state.isDragging = false;
+        draggedTile = null;
+    }
+    
+    pointerDown = false;
+    pointerButton = -1;
+    cameraControls.isOrbiting = false;
+    cameraControls.isPanning = false;
+}
+
+function onWheel(e) {
+    e.preventDefault();
+    cameraControls.spherical.radius *= 1 + e.deltaY * 0.001;
+    cameraControls.spherical.radius = Math.max(2, Math.min(20, cameraControls.spherical.radius));
+    updateCameraFromSpherical();
+}
+
+// ============================================
+// TOUCH HANDLING
+// ============================================
+let touchStartDist = 0;
+let touchStartRadius = 0;
+
+function onTouchStart(e) {
+    e.preventDefault();
+    
+    if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const pos = getPointerPos(touch);
+        cameraControls.lastPointer = { x: touch.clientX, y: touch.clientY };
+        
+        const hit = raycastTiles(pos);
+        if (hit) {
+            selectTile(hit.tile);
+            draggedTile = hit.tile;
+            state.isDragging = true;
+            
+            const groundHit = raycastGround(pos);
+            if (groundHit) {
+                state.dragOffset.set(
+                    hit.tile.mesh.position.x - groundHit.x,
+                    0,
+                    hit.tile.mesh.position.z - groundHit.z
+                );
+            } else {
+                state.dragOffset.set(0, 0, 0);
+            }
+            
+            const ghostMesh = ghost.createForTile(hit.tile);
+            scene.add(ghostMesh);
+        } else {
+            // Single finger on empty space - orbit
+            cameraControls.isOrbiting = true;
+        }
+    } else if (e.touches.length === 2) {
+        // Two finger - pan/zoom
+        state.isDragging = false;
+        draggedTile = null;
+        ghost.hide();
+        
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        touchStartDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        touchStartRadius = cameraControls.spherical.radius;
+        cameraControls.isPanning = true;
+        cameraControls.isOrbiting = false;
+        cameraControls.lastPointer = {
+            x: (t1.clientX + t2.clientX) / 2,
+            y: (t1.clientY + t2.clientY) / 2
+        };
+    }
+}
+
+function onTouchMove(e) {
+    e.preventDefault();
+    
+    if (e.touches.length === 1 && state.isDragging && draggedTile) {
+        const touch = e.touches[0];
+        const pos = getPointerPos(touch);
+        
+        const groundHit = raycastGround(pos);
+        if (groundHit) {
+            draggedTile.mesh.position.x = groundHit.x + state.dragOffset.x;
+            draggedTile.mesh.position.z = groundHit.z + state.dragOffset.z;
+            draggedTile.mesh.updateMatrixWorld(true);
+            
+            const snap = snapSystem.findBestSnap(draggedTile, state.tiles);
+            if (snap) {
+                const snapTransform = snapSystem.computeSnapTransform(snap, draggedTile);
+                if (snapTransform) {
+                    const hasCollision = snapSystem.checkCollision(
+                        draggedTile,
+                        snapTransform.position,
+                        snapTransform.quaternion,
+                        state.tiles,
+                        snap.staticTile.id
+                    );
+                    ghost.show(snapTransform.position, snapTransform.quaternion, !hasCollision);
+                    updateStatus(hasCollision ? '⚠️ Collision!' : '🧲 Snap!', !hasCollision);
+                } else {
+                    ghost.hide();
+                }
+            } else {
+                ghost.hide();
+            }
+        }
+        
+        cameraControls.lastPointer = { x: touch.clientX, y: touch.clientY };
+    } else if (e.touches.length === 1 && cameraControls.isOrbiting) {
+        const touch = e.touches[0];
+        const dx = touch.clientX - cameraControls.lastPointer.x;
+        const dy = touch.clientY - cameraControls.lastPointer.y;
+        
+        cameraControls.spherical.theta -= dx * 0.01;
+        cameraControls.spherical.phi += dy * 0.01;
+        cameraControls.spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraControls.spherical.phi));
+        updateCameraFromSpherical();
+        
+        cameraControls.lastPointer = { x: touch.clientX, y: touch.clientY };
+    } else if (e.touches.length === 2) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        
+        // Pinch zoom
+        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        const scale = touchStartDist / dist;
+        cameraControls.spherical.radius = Math.max(2, Math.min(20, touchStartRadius * scale));
+        
+        // Pan
+        const centerX = (t1.clientX + t2.clientX) / 2;
+        const centerY = (t1.clientY + t2.clientY) / 2;
+        const dx = centerX - cameraControls.lastPointer.x;
+        const dy = centerY - cameraControls.lastPointer.y;
+        
+        const panSpeed = 0.005 * cameraControls.spherical.radius;
+        const right = new Vector3();
+        camera.getWorldDirection(right);
+        right.crossVectors(new Vector3(0, 1, 0), right).normalize();
+        
+        cameraControls.target.addScaledVector(right, -dx * panSpeed);
+        cameraControls.target.y += dy * panSpeed;
+        
+        cameraControls.lastPointer = { x: centerX, y: centerY };
+        updateCameraFromSpherical();
+    }
+}
+
+function onTouchEnd(e) {
+    if (state.isDragging && draggedTile) {
+        if (ghost.active && ghost.valid && snapSystem.snapResult) {
+            const snapTransform = snapSystem.computeSnapTransform(snapSystem.snapResult, draggedTile);
+            if (snapTransform) {
+                const hasCollision = snapSystem.checkCollision(
+                    draggedTile,
+                    snapTransform.position,
+                    snapTransform.quaternion,
+                    state.tiles,
+                    snapSystem.snapResult.staticTile.id
+                );
+                
+                if (!hasCollision) {
+                    draggedTile.mesh.position.copy(snapTransform.position);
+                    draggedTile.mesh.quaternion.copy(snapTransform.quaternion);
+                    draggedTile.mesh.updateMatrixWorld(true);
+                    
+                    // Extract rotation values from quaternion
+                    const euler = new Euler().setFromQuaternion(snapTransform.quaternion, 'YXZ');
+                    draggedTile.yRotation = Math.round(THREE.MathUtils.radToDeg(euler.y));
+                    draggedTile.xTilt = Math.round(THREE.MathUtils.radToDeg(euler.x));
+                    
+                    while (draggedTile.yRotation < 0) draggedTile.yRotation += 360;
+                    while (draggedTile.yRotation >= 360) draggedTile.yRotation -= 360;
+                    draggedTile.xTilt = Math.max(0, Math.min(90, Math.abs(draggedTile.xTilt)));
+                    
+                    updateUIForSelection(draggedTile);
+                    updateStatus('✓ Snapped!');
+                }
+            }
+        }
+        ghost.hide();
+    }
+    
+    state.isDragging = false;
+    draggedTile = null;
+    cameraControls.isOrbiting = false;
+    cameraControls.isPanning = false;
+}
+
+// ============================================
+// KEYBOARD
+// ============================================
+function onKeyDown(e) {
+    if (e.code === 'Space') {
+        spacePressed = true;
+        e.preventDefault();
+    }
+    
+    const tile = getSelectedTile();
+    
+    switch(e.code) {
+        case 'KeyQ':
+            if (tile) rotateTile(tile, -CONFIG.ROTATION_STEP);
+            break;
+        case 'KeyE':
+            if (tile) rotateTile(tile, CONFIG.ROTATION_STEP);
+            break;
+        case 'Delete':
+        case 'Backspace':
+            if (tile) deleteTile(tile);
+            break;
+        case 'KeyD':
+            if (tile) duplicateTile(tile);
+            break;
+        case 'KeyG':
+            toggleGrid();
+            break;
+        case 'Digit1':
+            setActiveBuildType(TILE_TYPES.SQUARE);
+            break;
+        case 'Digit2':
+            setActiveBuildType(TILE_TYPES.TRI_EQUIL);
+            break;
+        case 'Digit3':
+            setActiveBuildType(TILE_TYPES.TRI_ISO);
+            break;
+        case 'Digit4':
+            setActiveBuildType(TILE_TYPES.TRI_TALL);
+            break;
+    }
+}
+
+function onKeyUp(e) {
+    if (e.code === 'Space') {
+        spacePressed = false;
+    }
+}
+
+// ============================================
+// TILE ACTIONS
+// ============================================
+function addTile() {
+    const tile = new Tile(state.activeBuildType);
+    
+    // Spawn in front of camera
+    const dir = new Vector3();
+    camera.getWorldDirection(dir);
+    dir.y = 0;
+    dir.normalize();
+    
+    let spawnPos = cameraControls.target.clone().add(dir.multiplyScalar(1.5));
+    spawnPos.y = 0; // Will be adjusted by updateTransform
+    
+    // Check for collisions and nudge if needed
+    for (let attempt = 0; attempt < 10; attempt++) {
+        let collision = false;
+        for (const other of state.tiles) {
+            const dx = spawnPos.x - other.mesh.position.x;
+            const dz = spawnPos.z - other.mesh.position.z;
+            const dist = Math.sqrt(dx*dx + dz*dz);
+            if (dist < 0.4) {
+                collision = true;
+                break;
+            }
+        }
+        if (!collision) break;
+        spawnPos.x += 0.4;
+        spawnPos.z += 0.2;
+    }
+    
+    tile.mesh.position.x = spawnPos.x;
+    tile.mesh.position.z = spawnPos.z;
+    tile.updateTransform();
+    
+    state.tiles.push(tile);
+    scene.add(tile.mesh);
+    
+    selectTile(tile);
+    updateStatus(`Added ${tile.type.replace('_', ' ')}`);
+}
+
+function duplicateTile(tile) {
+    const newTile = tile.clone();
+    state.tiles.push(newTile);
+    scene.add(newTile.mesh);
+    selectTile(newTile);
+    updateStatus('Duplicated tile');
+}
+
+function deleteTile(tile) {
+    scene.remove(tile.mesh);
+    state.tiles = state.tiles.filter(t => t.id !== tile.id);
+    selectTile(null);
+    updateStatus('Deleted tile');
+}
+
+function rotateTile(tile, degrees) {
+    tile.yRotation = Math.round((tile.yRotation + degrees + 360) % 360);
+    tile.updateTransform();
+    updateUIForSelection(tile);
+}
+
+function setTilt(tile, degrees) {
+    tile.xTilt = degrees;
+    tile.updateTransform();
+    updateUIForSelection(tile);
+    
+    // Update tilt button states
+    document.querySelectorAll('.tilt-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.tilt) === degrees);
+    });
+}
+
+function setHeight(tile, height) {
+    tile.heightOffset = height;
+    tile.updateTransform();
+    document.getElementById('heightValue').textContent = `${Math.round(height * 10)} cm`;
+}
+
+function toggleGrid() {
+    state.gridVisible = !state.gridVisible;
+    gridHelper.visible = state.gridVisible;
+}
+
+function setActiveBuildType(type) {
+    state.activeBuildType = type;
+    document.querySelectorAll('.build-piece').forEach(el => {
+        el.classList.toggle('active', el.dataset.type === type);
+    });
+}
+
+// ============================================
+// UI UPDATES
+// ============================================
+function updateUIForSelection(tile) {
+    if (tile) {
+        document.getElementById('rotValue').textContent = `${Math.round(tile.yRotation)}°`;
+        document.getElementById('heightSlider').value = tile.heightOffset;
+        document.getElementById('heightValue').textContent = `${Math.round(tile.heightOffset * 10)} cm`;
+        
+        document.querySelectorAll('.tilt-btn').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.tilt) === tile.xTilt);
+        });
+    }
+}
+
+function updateStatus(text, isSnap = false, isCollision = false) {
+    const bar = document.getElementById('statusBar');
+    bar.textContent = text;
+    bar.classList.remove('snap-active', 'collision-warning');
+    if (isSnap) bar.classList.add('snap-active');
+    if (text.includes('Collision') || text.includes('⚠️')) bar.classList.add('collision-warning');
+}
+
+// ============================================
+// UI EVENT LISTENERS
+// ============================================
+function setupUI() {
+    // Add button
+    document.getElementById('addBtn').addEventListener('click', addTile);
+    
+    // Duplicate button
+    document.getElementById('dupBtn').addEventListener('click', () => {
+        const tile = getSelectedTile();
+        if (tile) duplicateTile(tile);
+    });
+    
+    // Delete button
+    document.getElementById('delBtn').addEventListener('click', () => {
+        const tile = getSelectedTile();
+        if (tile) deleteTile(tile);
+    });
+    
+    // Grid toggle
+    document.getElementById('gridBtn').addEventListener('click', toggleGrid);
+    
+    // Rotation buttons
+    document.getElementById('rotLeft').addEventListener('click', () => {
+        const tile = getSelectedTile();
+        if (tile) rotateTile(tile, -CONFIG.ROTATION_STEP);
+    });
+    document.getElementById('rotRight').addEventListener('click', () => {
+        const tile = getSelectedTile();
+        if (tile) rotateTile(tile, CONFIG.ROTATION_STEP);
+    });
+    
+    // Mobile rotation buttons
+    document.getElementById('mRotLeft')?.addEventListener('click', () => {
+        const tile = getSelectedTile();
+        if (tile) rotateTile(tile, -CONFIG.ROTATION_STEP);
+    });
+    document.getElementById('mRotRight')?.addEventListener('click', () => {
+        const tile = getSelectedTile();
+        if (tile) rotateTile(tile, CONFIG.ROTATION_STEP);
+    });
+    
+    // Tilt buttons
+    document.querySelectorAll('.tilt-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tile = getSelectedTile();
+            if (tile) setTilt(tile, parseInt(btn.dataset.tilt));
+        });
+    });
+    
+    // Height slider
+    document.getElementById('heightSlider').addEventListener('input', (e) => {
+        const tile = getSelectedTile();
+        if (tile) setHeight(tile, parseFloat(e.target.value));
+    });
+    
+    // Build piece picker
+    document.querySelectorAll('.build-piece').forEach(el => {
+        el.addEventListener('click', () => {
+            setActiveBuildType(el.dataset.type);
+        });
+    });
+    
+    // Help modal
+    document.getElementById('helpBtn').addEventListener('click', () => {
+        document.getElementById('helpModal').classList.add('visible');
+    });
+    document.getElementById('closeHelp').addEventListener('click', () => {
+        document.getElementById('helpModal').classList.remove('visible');
+    });
+    document.getElementById('helpModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            document.getElementById('helpModal').classList.remove('visible');
+        }
+    });
+}
+
+// ============================================
+// RENDER LOOP
+// ============================================
+function animate() {
+    requestAnimationFrame(animate);
+    
+    const dt = clock.getDelta();
+    ghost.update(dt);
+    
+    renderer.render(scene, camera);
+}
+
+// ============================================
+// RESIZE
+// ============================================
+function onResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ============================================
+// INIT
+// ============================================
+function init() {
+    initThree();
+    setupUI();
+    updateCameraFromSpherical();
+    
+    // Event listeners
+    const canvas = renderer.domElement;
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove);
+    canvas.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointerleave', onPointerUp);
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+    
+    // Touch events
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    canvas.addEventListener('touchend', onTouchEnd);
+    
+    // Keyboard
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    
+    // Resize
+    window.addEventListener('resize', onResize);
+    
+    // Start
+    animate();
+    
+    // Add initial tile for demo
+    addTile();
+}
+
+init();
+</script>
+</body>
+</html>
