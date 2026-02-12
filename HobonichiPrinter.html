@@ -160,10 +160,59 @@
   }
   .grid-info strong { color: var(--text); }
 
+  /* ── Month Picker ── */
+  .month-picker {
+    display: flex; align-items: center; gap: 2px;
+    background: var(--bg-warm); border: 1px solid var(--border);
+    border-radius: 9px; padding: 3px;
+    user-select: none;
+  }
+  .month-nav {
+    width: 30px; height: 28px; border: none;
+    background: transparent; cursor: pointer;
+    border-radius: 6px; display: flex;
+    align-items: center; justify-content: center;
+    color: var(--text-muted); transition: all 0.12s ease;
+  }
+  .month-nav:hover { background: var(--border-light); color: var(--text); }
+  .month-nav:active { transform: scale(0.92); }
+  .month-nav svg { width: 14px; height: 14px; }
+  .month-label {
+    font-size: 13px; font-weight: 700;
+    color: var(--text); min-width: 110px;
+    text-align: center; letter-spacing: -0.2px;
+    padding: 0 2px;
+  }
+  @media (max-width: 500px) {
+    .month-label { font-size: 11px; min-width: 85px; }
+    .month-nav { width: 26px; height: 24px; }
+  }
+
+  /* ── Template day number text ── */
+  .tpl-day-num {
+    position: absolute;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    color: #6a9ec4;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* Dim cells outside current month */
+  .img-cell.outside-month {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .tpl-day-rect.outside-month {
+    opacity: 0.25;
+  }
+
   /* ── Canvas ── */
   .canvas-wrapper {
     padding: 20px; display: flex; justify-content: center;
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    overflow: auto; -webkit-overflow-scrolling: touch;
+    position: relative;
   }
 
   .paper {
@@ -238,6 +287,43 @@
 
   .img-cell img {
     width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+
+  /* ── Zoom Controls ── */
+  .zoom-controls {
+    position: fixed;
+    bottom: 72px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 90;
+  }
+  .zoom-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 600;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .zoom-btn:hover { background: var(--bg-warm); }
+  .zoom-btn:active { transform: scale(0.93); }
+  .zoom-btn svg { width: 18px; height: 18px; }
+
+  .zoom-level {
+    text-align: center;
+    font-size: 10px; font-weight: 700;
+    color: var(--text-muted);
+    padding: 2px 0;
+    letter-spacing: 0.3px;
+    user-select: none;
   }
 
   /* ── Modal ── */
@@ -369,7 +455,7 @@
     }
     .app-header, .settings-panel, .bottom-bar, .toast,
     .modal-overlay, .placeholder-icon, .edit-badge,
-    .template-layer {
+    .template-layer, .zoom-controls {
       display: none !important;
     }
     .main-content { padding: 0 !important; }
@@ -386,6 +472,10 @@
       outline: 1px dashed #ccc !important; outline-offset: -0.5px;
       -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
+    .img-cell.outside-month {
+      outline: none !important;
+      visibility: hidden !important;
+    }
     .img-cell img {
       -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
@@ -400,6 +490,8 @@
     .modal { max-width: calc(100vw - 48px); }
     .settings-row { gap: 6px; }
     .field { min-width: 65px; }
+    .zoom-controls { bottom: 68px; right: 10px; }
+    .zoom-btn { width: 34px; height: 34px; }
   }
 
   .main-content { padding-bottom: 70px; }
@@ -414,6 +506,15 @@
       <span>Hobonichi Weekly Sticker Printer</span>
     </div>
     <div class="header-actions">
+      <div class="month-picker">
+        <button class="month-nav" id="monthPrev" title="Previous month">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="month-label" id="monthLabel">January 2026</div>
+        <button class="month-nav" id="monthNext" title="Next month">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
       <button class="btn-icon" id="settingsToggle" title="Settings">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       </button>
@@ -474,6 +575,18 @@
       <div class="image-layer" id="imageLayer"></div>
     </div>
   </div>
+</div>
+
+<!-- Zoom Controls -->
+<div class="zoom-controls" id="zoomControls">
+  <button class="zoom-btn" id="zoomInBtn" title="Zoom in">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <div class="zoom-level" id="zoomLevel">100%</div>
+  <button class="zoom-btn" id="zoomOutBtn" title="Zoom out">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <button class="zoom-btn" id="zoomResetBtn" title="Reset zoom" style="font-size:11px; font-weight:700; margin-top:2px;">FIT</button>
 </div>
 
 <div class="bottom-bar">
@@ -537,11 +650,21 @@
   const COLS_LEFT = 3;
   const COLS_RIGHT = 4;
   const TOTAL_COLS = 7;
-  const DAY_ROWS = 5;
+  const MAX_DAY_ROWS = 6;
   const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
   const TEMPLATE_W = COLS_LEFT * DAY_W + PAGE_GAP + COLS_RIGHT * DAY_W;
-  const TEMPLATE_H = HEADER_H + DAY_ROWS * DAY_H;
+
+  function getRequiredRows(year, month) {
+    const firstDay = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstCol = (firstDay.getDay() + 6) % 7;
+    return Math.ceil((firstCol + daysInMonth) / 7);
+  }
+
+  function getTemplateH() {
+    return HEADER_H + getRequiredRows(calYear, calMonth) * DAY_H;
+  }
 
   // Letter paper in mm
   const PAPER_W = 215.9;
@@ -550,6 +673,16 @@
   // ── State ──
   let cellImages = {};  // key: "col-row" → { dataUrl, fit }
   let showOverlay = true;
+  let userZoom = 1;     // 1 = fit-to-width, >1 zoomed in
+  const ZOOM_MIN = 0.5;
+  const ZOOM_MAX = 4;
+  const ZOOM_STEP = 0.25;
+
+  // Calendar state
+  let calYear = 2026;
+  let calMonth = 0; // 0-indexed (0 = January)
+  const MONTH_NAMES = ['January','February','March','April','May','June',
+    'July','August','September','October','November','December'];
 
   // Modal state
   let editingKey = null;
@@ -619,7 +752,7 @@
   function getOrigin() {
     return {
       x: (PAPER_W - TEMPLATE_W) / 2,
-      y: (PAPER_H - TEMPLATE_H) / 2
+      y: (PAPER_H - getTemplateH()) / 2
     };
   }
 
@@ -644,6 +777,47 @@
     return { x, y };
   }
 
+  // ── Calendar grid: returns a 7×5 array [col][row] → dayNumber or null ──
+  function getCalendarGrid(year, month) {
+    const grid = {};
+    const firstDay = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // JS getDay: 0=Sun...6=Sat → our col: Mon=0...Sun=6
+    const firstCol = (firstDay.getDay() + 6) % 7;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const cellIndex = firstCol + (d - 1);
+      const col = cellIndex % 7;
+      const row = Math.floor(cellIndex / 7);
+      if (row < MAX_DAY_ROWS) {
+        grid[col + '-' + row] = d;
+      }
+    }
+    return grid;
+  }
+
+  // ── Month picker ──
+  const monthLabel = $('monthLabel');
+
+  function updateMonthLabel() {
+    monthLabel.textContent = MONTH_NAMES[calMonth] + ' ' + calYear;
+  }
+
+  $('monthPrev').addEventListener('click', () => {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    updateMonthLabel();
+    render();
+  });
+
+  $('monthNext').addEventListener('click', () => {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    updateMonthLabel();
+    render();
+  });
+
   // ── Settings ──
   $('settingsToggle').addEventListener('click', () => $('settingsPanel').classList.toggle('open'));
 
@@ -665,7 +839,8 @@
   function render() {
     const wrapperW = canvasWrapper.clientWidth - 16;
     const paperRealWpx = PAPER_W * 96 / 25.4;
-    const scale = Math.min(1, wrapperW / paperRealWpx);
+    const baseScale = Math.min(1, wrapperW / paperRealWpx);
+    const scale = baseScale * userZoom;
 
     // mm → screen px
     const s = v => v * 96 / 25.4 * scale;
@@ -675,6 +850,7 @@
 
     const origin = getOrigin();
     const imgSize = getImgSize();
+    const dayRows = getRequiredRows(calYear, calMonth);
 
     // ── Template overlay ──
     templateLayer.innerHTML = '';
@@ -687,7 +863,7 @@
       gap.style.left = s(origin.x + COLS_LEFT * DAY_W) + 'px';
       gap.style.top = s(origin.y) + 'px';
       gap.style.width = s(PAGE_GAP) + 'px';
-      gap.style.height = s(TEMPLATE_H) + 'px';
+      gap.style.height = s(getTemplateH()) + 'px';
       templateLayer.appendChild(gap);
 
       // Headers
@@ -703,14 +879,19 @@
         templateLayer.appendChild(hdr);
       }
 
-      // Day rectangles
-      for (let r = 0; r < DAY_ROWS; r++) {
+      // Day rectangles with day numbers
+      const calGrid = getCalendarGrid(calYear, calMonth);
+
+      for (let r = 0; r < dayRows; r++) {
         for (let c = 0; c < TOTAL_COLS; c++) {
+          const key = c + '-' + r;
           const dr = getDayRect(c, r);
+          const dayNum = calGrid[key];
+          const isOutside = dayNum === undefined;
 
           // Full day rect
           const rect = document.createElement('div');
-          rect.className = 'tpl-day-rect';
+          rect.className = 'tpl-day-rect' + (isOutside ? ' outside-month' : '');
           rect.style.left = s(origin.x + dr.x) + 'px';
           rect.style.top = s(origin.y + dr.y) + 'px';
           rect.style.width = s(dr.w) + 'px';
@@ -719,27 +900,43 @@
 
           // Day number row
           const numRow = document.createElement('div');
-          numRow.className = 'tpl-day-num-row';
+          numRow.className = 'tpl-day-num-row' + (isOutside ? ' outside-month' : '');
           numRow.style.left = s(origin.x + dr.x) + 'px';
           numRow.style.top = s(origin.y + dr.y) + 'px';
           numRow.style.width = s(dr.w) + 'px';
           numRow.style.height = s(DAY_NUM_H) + 'px';
           templateLayer.appendChild(numRow);
+
+          // Day number text
+          if (dayNum !== undefined) {
+            const numEl = document.createElement('div');
+            numEl.className = 'tpl-day-num';
+            numEl.textContent = dayNum;
+            const numFontSize = Math.max(7, s(DAY_NUM_H * 0.7));
+            numEl.style.left = (s(origin.x + dr.x) + Math.max(2, s(GU * 0.15))) + 'px';
+            numEl.style.top = s(origin.y + dr.y) + 'px';
+            numEl.style.height = s(DAY_NUM_H) + 'px';
+            numEl.style.lineHeight = s(DAY_NUM_H) + 'px';
+            numEl.style.fontSize = numFontSize + 'px';
+            templateLayer.appendChild(numEl);
+          }
         }
       }
     }
 
     // ── Image cells ──
     imageLayer.innerHTML = '';
+    const calGridForCells = getCalendarGrid(calYear, calMonth);
 
-    for (let r = 0; r < DAY_ROWS; r++) {
+    for (let r = 0; r < dayRows; r++) {
       for (let c = 0; c < TOTAL_COLS; c++) {
         const key = c + '-' + r;
         const dr = getDayRect(c, r);
         const pos = getAnchoredPos(dr, imgSize.w, imgSize.h);
+        const isOutside = calGridForCells[key] === undefined;
 
         const cell = document.createElement('div');
-        cell.className = 'img-cell';
+        cell.className = 'img-cell' + (isOutside ? ' outside-month' : '');
         cell.style.left = s(origin.x + pos.x) + 'px';
         cell.style.top = s(origin.y + pos.y) + 'px';
         cell.style.width = s(imgSize.w) + 'px';
@@ -788,17 +985,21 @@
     const dH = fromMM(imgSize.h, unit);
     const dec = unit === 'px' ? 0 : unit === 'mm' ? 1 : 2;
     const uL = unit === 'in' ? '"' : unit;
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
     gridInfo.innerHTML =
       `Image: <strong>${dW.toFixed(dec)}${uL} × ${dH.toFixed(dec)}${uL}</strong> · ` +
       `Day box: <strong>${DAY_W.toFixed(1)}mm × ${DAY_H.toFixed(1)}mm</strong> · ` +
-      `35 cells (7 × 5)`;
+      `${daysInMonth} days`;
 
     updateCount();
+    updateZoomDisplay();
   }
 
   function updateCount() {
-    const c = Object.keys(cellImages).length;
-    cellCountEl.innerHTML = `<strong>${c}</strong> / 35 images placed`;
+    const calGrid = getCalendarGrid(calYear, calMonth);
+    const totalDays = Object.keys(calGrid).length;
+    const c = Object.keys(cellImages).filter(k => calGrid[k] !== undefined).length;
+    cellCountEl.innerHTML = `<strong>${c}</strong> / ${totalDays} images placed`;
   }
 
   // ── Modal ──
@@ -812,7 +1013,9 @@
     originalFit = editingFit;
     originalDataUrl = editingDataUrl;
 
-    modalCellNum.textContent = `${DAYS[col]}, Row ${row + 1}`;
+    const calGrid = getCalendarGrid(calYear, calMonth);
+    const dayNum = calGrid[key];
+    modalCellNum.textContent = dayNum ? `${DAYS[col]} ${dayNum}` : `${DAYS[col]}, Row ${row + 1}`;
 
     const imgSize = getImgSize();
     const aspect = imgSize.w / imgSize.h;
@@ -921,6 +1124,7 @@
   $('printBtn').addEventListener('click', () => {
     const origin = getOrigin();
     const imgSize = getImgSize();
+    const dayRows = getRequiredRows(calYear, calMonth);
 
     // Set paper to exact print size in mm
     paper.style.width = PAPER_W + 'mm';
@@ -931,7 +1135,7 @@
     // Reposition all image cells in mm for exact print
     const cells = imageLayer.querySelectorAll('.img-cell');
     let idx = 0;
-    for (let r = 0; r < DAY_ROWS; r++) {
+    for (let r = 0; r < dayRows; r++) {
       for (let c = 0; c < TOTAL_COLS; c++) {
         const dr = getDayRect(c, r);
         const pos = getAnchoredPos(dr, imgSize.w, imgSize.h);
@@ -977,8 +1181,88 @@
   let resizeTimer;
   window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 150); });
 
+  // ── Zoom ──
+  const zoomLevelEl = $('zoomLevel');
+
+  function updateZoomDisplay() {
+    const wrapperW = canvasWrapper.clientWidth - 16;
+    const paperRealWpx = PAPER_W * 96 / 25.4;
+    const baseScale = Math.min(1, wrapperW / paperRealWpx);
+    const effectivePct = Math.round(baseScale * userZoom * 100);
+    zoomLevelEl.textContent = effectivePct + '%';
+  }
+
+  function setZoom(z, centerX, centerY) {
+    const oldZoom = userZoom;
+    userZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+
+    // Maintain scroll position around the zoom center point
+    if (centerX !== undefined && centerY !== undefined) {
+      const ratio = userZoom / oldZoom;
+      const sl = canvasWrapper.scrollLeft;
+      const st = canvasWrapper.scrollTop;
+      render();
+      canvasWrapper.scrollLeft = (sl + centerX) * ratio - centerX;
+      canvasWrapper.scrollTop = (st + centerY) * ratio - centerY;
+    } else {
+      render();
+    }
+  }
+
+  $('zoomInBtn').addEventListener('click', () => setZoom(userZoom + ZOOM_STEP));
+  $('zoomOutBtn').addEventListener('click', () => setZoom(userZoom - ZOOM_STEP));
+  $('zoomResetBtn').addEventListener('click', () => setZoom(1));
+
+  // Ctrl+Scroll wheel zoom (desktop)
+  canvasWrapper.addEventListener('wheel', (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = -e.deltaY * 0.003;
+      const newZoom = userZoom + delta * (ZOOM_MAX - ZOOM_MIN);
+      const rect = canvasWrapper.getBoundingClientRect();
+      setZoom(newZoom, e.clientX - rect.left, e.clientY - rect.top);
+    }
+  }, { passive: false });
+
+  // Pinch-to-zoom (mobile)
+  let pinchStartDist = 0;
+  let pinchStartZoom = 1;
+
+  function getPinchDist(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  function getPinchCenter(touches) {
+    const rect = canvasWrapper.getBoundingClientRect();
+    return {
+      x: (touches[0].clientX + touches[1].clientX) / 2 - rect.left,
+      y: (touches[0].clientY + touches[1].clientY) / 2 - rect.top
+    };
+  }
+
+  canvasWrapper.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      pinchStartDist = getPinchDist(e.touches);
+      pinchStartZoom = userZoom;
+    }
+  }, { passive: false });
+
+  canvasWrapper.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = getPinchDist(e.touches);
+      const ratio = dist / pinchStartDist;
+      const center = getPinchCenter(e.touches);
+      setZoom(pinchStartZoom * ratio, center.x, center.y);
+    }
+  }, { passive: false });
+
   // ── Init ──
   unitSelect.dataset.prevUnit = 'mm';
+  updateMonthLabel();
   render();
 })();
 </script>
