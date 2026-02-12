@@ -173,7 +173,8 @@
   }
 
   .grid-cell {
-    border: 0.5px dashed var(--grid-line);
+    outline: 1px dashed var(--grid-line);
+    outline-offset: -0.5px;
     position: relative; cursor: pointer;
     transition: background 0.12s ease;
     overflow: hidden; display: flex;
@@ -384,7 +385,8 @@
       break-after: avoid !important;
     }
     .grid-cell {
-      border: 0.5px dashed #ccc !important;
+      outline: 1px dashed #ccc !important;
+      outline-offset: -0.5px;
       -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
     .grid-cell img {
