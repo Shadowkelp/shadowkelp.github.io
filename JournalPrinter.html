@@ -19,12 +19,10 @@
     --border: #d9cfc4;
     --border-light: #e8e0d6;
     --shadow-sm: 0 1px 3px rgba(44,36,32,0.06);
-    --shadow-md: 0 4px 12px rgba(44,36,32,0.08);
     --shadow-lg: 0 8px 30px rgba(44,36,32,0.12);
-    --radius: 10px;
     --grid-line: #c8bfb4;
-    --cell-empty: #faf7f3;
     --cell-hover: #f5efe8;
+    --danger: #c0392b;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -77,11 +75,7 @@
     margin-top: 2px;
   }
 
-  .header-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
 
   /* ── Buttons ── */
   .btn {
@@ -99,10 +93,7 @@
     white-space: nowrap;
   }
 
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-  }
+  .btn-primary { background: var(--accent); color: #fff; }
   .btn-primary:hover { background: var(--accent-hover); }
   .btn-primary:active { transform: scale(0.97); }
 
@@ -114,12 +105,8 @@
   .btn-secondary:hover { background: var(--border-light); }
 
   .btn-icon {
-    width: 38px;
-    height: 38px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 38px; height: 38px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
     border-radius: 8px;
     background: var(--bg-warm);
     border: 1px solid var(--border);
@@ -137,189 +124,207 @@
     overflow: hidden;
     transition: max-height 0.3s ease, padding 0.3s ease;
   }
-  .settings-panel.open {
-    max-height: 400px;
-    padding: 16px 20px;
-  }
+  .settings-panel.open { max-height: 400px; padding: 16px 20px; }
 
-  .settings-inner {
-    max-width: 800px;
-    margin: 0 auto;
-  }
+  .settings-inner { max-width: 800px; margin: 0 auto; }
 
   .settings-row {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: flex-end;
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
   }
 
-  .field {
-    flex: 1;
-    min-width: 90px;
-  }
+  .field { flex: 1; min-width: 90px; }
 
   .field label {
-    display: block;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 5px;
+    display: block; font-size: 11px; font-weight: 600;
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 5px;
   }
 
   .field input, .field select {
-    width: 100%;
-    padding: 9px 10px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    background: var(--bg);
-    color: var(--text);
+    width: 100%; padding: 9px 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--bg); color: var(--text);
     transition: border-color 0.15s ease;
     -webkit-appearance: none;
   }
-  .field input:focus, .field select:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
 
   .grid-info {
-    margin-top: 12px;
-    font-size: 12px;
-    color: var(--text-muted);
-    font-weight: 500;
+    margin-top: 12px; font-size: 12px;
+    color: var(--text-muted); font-weight: 500;
   }
   .grid-info strong { color: var(--text); }
 
-  /* ── Canvas Area ── */
+  /* ── Canvas ── */
   .canvas-wrapper {
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    padding: 20px; display: flex; justify-content: center;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
   }
 
   .paper {
-    background: #fff;
-    box-shadow: var(--shadow-lg);
-    border-radius: 4px;
-    position: relative;
-    overflow: hidden;
-    flex-shrink: 0;
-    /* Dimensions set by JS based on screen vs print */
-  }
-
-  .paper-margin {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    pointer-events: none;
+    background: #fff; box-shadow: var(--shadow-lg);
+    border-radius: 4px; position: relative;
+    overflow: hidden; flex-shrink: 0;
   }
 
   .grid-container {
-    display: grid;
-    position: relative;
-    gap: var(--grid-gap);
+    display: grid; position: relative; gap: var(--grid-gap);
   }
 
   .grid-cell {
     border: 0.5px dashed var(--grid-line);
-    position: relative;
-    cursor: pointer;
+    position: relative; cursor: pointer;
     transition: background 0.12s ease;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow: hidden; display: flex;
+    align-items: center; justify-content: center;
   }
 
-  .grid-cell:hover {
-    background: var(--cell-hover);
-  }
-
-  .grid-cell.has-image:hover {
-    background: transparent;
-  }
+  .grid-cell:hover { background: var(--cell-hover); }
+  .grid-cell.has-image:hover { background: transparent; }
 
   .grid-cell .placeholder-icon {
-    opacity: 0;
-    transition: opacity 0.15s ease;
-    color: var(--border);
+    opacity: 0; transition: opacity 0.15s ease; color: var(--border);
   }
-  .grid-cell:hover .placeholder-icon {
-    opacity: 1;
-  }
+  .grid-cell:hover .placeholder-icon { opacity: 1; }
   .grid-cell.has-image .placeholder-icon { display: none; }
 
+  .grid-cell .edit-badge {
+    position: absolute; top: 1px; right: 1px;
+    width: 14px; height: 14px; border-radius: 3px;
+    background: rgba(0,0,0,0.4);
+    display: none; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .grid-cell .edit-badge svg { width: 8px; height: 8px; color: #fff; }
+  .grid-cell.has-image .edit-badge { display: flex; }
+
   .grid-cell img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    width: 100%; height: 100%; object-fit: cover; display: block;
   }
 
-  .cell-actions {
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 5;
-    background: rgba(0,0,0,0.3);
+  /* ── Cell Editor Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(30,25,20,0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    width: 100%; max-width: 340px;
+    overflow: hidden;
+    transform: scale(0.93) translateY(10px);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+
+  .modal-header {
+    padding: 16px 20px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .modal-cell-num { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+
+  .modal-preview {
+    padding: 0 20px;
+    display: flex; justify-content: center; align-items: center;
   }
 
-  .cell-toolbar {
-    display: flex;
-    gap: 4px;
-    background: rgba(40,35,30,0.85);
-    border-radius: 6px;
-    padding: 3px;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+  .modal-preview-frame {
+    position: relative;
+    background: repeating-conic-gradient(#e8e0d6 0% 25%, #f5f0ea 0% 50%) 50% / 16px 16px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
   }
 
-  .grid-cell.has-image:hover .cell-actions,
-  .grid-cell.has-image.touched .cell-actions {
-    display: flex;
+  .modal-preview-frame img {
+    width: 100%; height: 100%; display: block;
   }
 
-  .cell-action-btn {
-    width: 28px;
-    height: 24px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    transition: all 0.1s ease;
-    background: transparent;
-    color: #fff;
-  }
-  .cell-action-btn:hover, .cell-action-btn:active {
-    background: rgba(255,255,255,0.2);
+  .modal-fit-label {
+    text-align: center; padding: 10px 0 0;
+    font-size: 11px; font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px;
   }
 
-  .cell-action-btn.remove:hover, .cell-action-btn.remove:active {
-    background: rgba(200,50,50,0.7);
+  .modal-actions {
+    padding: 16px 20px 12px;
+    display: flex; flex-direction: column; gap: 8px;
   }
 
-  .cell-action-btn svg {
-    width: 13px;
-    height: 13px;
+  .modal-action-row { display: flex; gap: 8px; }
+
+  .modal-btn {
+    flex: 1;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer; border-radius: 10px;
+    padding: 12px 14px;
+    transition: all 0.15s ease;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
   }
+  .modal-btn:active { transform: scale(0.97); }
+  .modal-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .modal-btn-fit {
+    background: var(--bg-warm); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .modal-btn-fit:hover { background: var(--border-light); }
+
+  .modal-btn-replace {
+    background: var(--bg-warm); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .modal-btn-replace:hover { background: var(--border-light); }
+
+  .modal-btn-remove {
+    background: #fdf0ee; color: var(--danger);
+    border: 1px solid #e8c4bf;
+  }
+  .modal-btn-remove:hover { background: #fbe3df; }
+
+  .modal-confirm-row {
+    display: flex; gap: 8px; padding: 4px 20px 20px;
+  }
+
+  .modal-btn-cancel {
+    flex: 1;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+    border: 1px solid var(--border); cursor: pointer;
+    border-radius: 10px; padding: 13px 14px;
+    background: var(--surface); color: var(--text-muted);
+    transition: all 0.15s ease;
+  }
+  .modal-btn-cancel:hover { background: var(--bg); }
+  .modal-btn-cancel:active { transform: scale(0.97); }
+
+  .modal-btn-accept {
+    flex: 1.5;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+    border: none; cursor: pointer; border-radius: 10px;
+    padding: 13px 14px;
+    background: var(--accent); color: #fff;
+    transition: all 0.15s ease;
+  }
+  .modal-btn-accept:hover { background: var(--accent-hover); }
+  .modal-btn-accept:active { transform: scale(0.97); }
 
   /* ── Bottom bar ── */
   .bottom-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: fixed; bottom: 0; left: 0; right: 0;
     background: var(--surface);
     border-top: 1px solid var(--border-light);
     padding: 12px 20px;
@@ -329,146 +334,78 @@
   }
 
   .bottom-inner {
-    max-width: 800px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
+    max-width: 800px; margin: 0 auto;
+    display: flex; justify-content: space-between;
+    align-items: center; gap: 10px;
   }
 
-  .cell-count {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-weight: 500;
-  }
+  .cell-count { font-size: 12px; color: var(--text-muted); font-weight: 500; }
   .cell-count strong { color: var(--accent); }
 
-  /* ── Hidden file input ── */
-  #fileInput {
-    display: none;
-  }
+  #fileInput { display: none; }
 
-  /* ── Toast ── */
   .toast {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
+    position: fixed; bottom: 80px; left: 50%;
     transform: translateX(-50%) translateY(20px);
-    background: var(--text);
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    opacity: 0;
-    pointer-events: none;
+    background: var(--text); color: #fff;
+    padding: 10px 20px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    opacity: 0; pointer-events: none;
     transition: all 0.25s ease;
-    z-index: 200;
-    white-space: nowrap;
+    z-index: 200; white-space: nowrap;
   }
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* ── Print Styles ── */
+  /* ── Print ── */
   @media print {
-    @page {
-      size: letter;
-      margin: 0;
-    }
-
+    @page { size: letter; margin: 0; }
     html, body {
-      width: 8.5in;
-      height: 11in;
+      width: 8.5in; height: 11in;
       overflow: hidden !important;
       background: #fff !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-
     .app-header, .settings-panel, .bottom-bar, .toast,
-    .cell-actions, .placeholder-icon, .main-content {
-      display: contents !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-
-    .app-header, .settings-panel, .bottom-bar, .toast,
-    .cell-actions, .placeholder-icon {
+    .modal-overlay, .placeholder-icon, .edit-badge {
       display: none !important;
     }
-
-    .main-content {
-      padding: 0 !important;
-    }
-
+    .main-content { padding: 0 !important; }
     .canvas-wrapper {
-      padding: 0 !important;
-      margin: 0 !important;
-      overflow: hidden !important;
-      display: block !important;
+      padding: 0 !important; margin: 0 !important;
+      overflow: hidden !important; display: block !important;
     }
-
     .paper {
-      box-shadow: none !important;
-      border-radius: 0 !important;
-      width: 8.5in !important;
-      height: 11in !important;
-      max-height: 11in !important;
-      margin: 0 !important;
+      box-shadow: none !important; border-radius: 0 !important;
+      width: 8.5in !important; height: 11in !important;
+      max-height: 11in !important; margin: 0 !important;
       overflow: hidden !important;
       page-break-after: avoid !important;
       break-after: avoid !important;
     }
-
     .grid-cell {
       border: 0.5px dashed #ccc !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
-
     .grid-cell img {
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
   }
 
-  /* ── Responsive ── */
   @media (max-width: 500px) {
     .app-header { padding: 12px 16px; }
     .app-title { font-size: 17px; }
     .canvas-wrapper { padding: 16px 10px; padding-bottom: 80px; }
     .settings-panel.open { padding: 12px 16px; }
     .btn { padding: 9px 12px; font-size: 12px; }
+    .modal { max-width: calc(100vw - 48px); }
   }
 
-  /* body padding for fixed bottom bar */
-  .main-content {
-    padding-bottom: 70px;
-  }
-
-  /* Touch device support - show toolbar on tap */
-  @media (hover: none) {
-    .grid-cell.has-image .cell-actions {
-      /* controlled by .touched class via JS */
-    }
-    .cell-action-btn {
-      width: 32px;
-      height: 28px;
-      font-size: 13px;
-    }
-    .cell-action-btn svg {
-      width: 15px;
-      height: 15px;
-    }
-  }
+  .main-content { padding-bottom: 70px; }
 </style>
 </head>
 <body>
 
-<!-- Header -->
 <header class="app-header">
   <div class="header-inner">
     <div class="app-title">
@@ -484,7 +421,6 @@
   </div>
 </header>
 
-<!-- Settings Panel -->
 <div class="settings-panel" id="settingsPanel">
   <div class="settings-inner">
     <div class="settings-row">
@@ -513,7 +449,6 @@
   </div>
 </div>
 
-<!-- Main Content -->
 <div class="main-content">
   <div class="canvas-wrapper" id="canvasWrapper">
     <div class="paper" id="paper">
@@ -522,7 +457,6 @@
   </div>
 </div>
 
-<!-- Bottom Bar -->
 <div class="bottom-bar">
   <div class="bottom-inner">
     <div class="cell-count" id="cellCount">0 images placed</div>
@@ -533,62 +467,90 @@
   </div>
 </div>
 
-<!-- Hidden file input -->
-<input type="file" id="fileInput" accept="image/*">
+<!-- Cell Editor Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-title">Edit Cell</div>
+      <div class="modal-cell-num" id="modalCellNum"></div>
+    </div>
+    <div class="modal-preview">
+      <div class="modal-preview-frame" id="modalPreviewFrame">
+        <img id="modalPreviewImg" src="" alt="Preview">
+      </div>
+    </div>
+    <div class="modal-fit-label" id="modalFitLabel"></div>
+    <div class="modal-actions">
+      <div class="modal-action-row">
+        <button class="modal-btn modal-btn-fit" id="modalFitBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          <span id="modalFitText">Switch to Fit</span>
+        </button>
+        <button class="modal-btn modal-btn-replace" id="modalReplaceBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+          Replace
+        </button>
+      </div>
+      <button class="modal-btn modal-btn-remove" id="modalRemoveBtn" style="width:100%">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        Remove Image
+      </button>
+    </div>
+    <div class="modal-confirm-row">
+      <button class="modal-btn-cancel" id="modalCancelBtn">Cancel</button>
+      <button class="modal-btn-accept" id="modalAcceptBtn">Accept</button>
+    </div>
+  </div>
+</div>
 
-<!-- Toast -->
+<input type="file" id="fileInput" accept="image/*">
 <div class="toast" id="toast"></div>
 
 <script>
 (function() {
-  // ── Constants ──
-  const LETTER_W_IN = 8.5;
-  const LETTER_H_IN = 11;
-  const DPI = 96; // CSS reference DPI
-  const GAP_IN = 0.025; // ~0.6mm gap between cells
+  const LETTER_W_IN = 8.5, LETTER_H_IN = 11, DPI = 96, GAP_IN = 0.025;
 
-  // ── State ──
-  let cellImages = {}; // { cellIndex: { dataUrl, fit } }
+  let cellImages = {};
   let activeCellIndex = null;
 
-  // ── Elements ──
-  const paper = document.getElementById('paper');
-  const gridContainer = document.getElementById('gridContainer');
-  const cellWidthInput = document.getElementById('cellWidth');
-  const cellHeightInput = document.getElementById('cellHeight');
-  const unitSelect = document.getElementById('unitSelect');
-  const marginInput = document.getElementById('paperMargin');
-  const gridInfo = document.getElementById('gridInfo');
-  const fileInput = document.getElementById('fileInput');
-  const printBtn = document.getElementById('printBtn');
-  const clearAllBtn = document.getElementById('clearAllBtn');
-  const settingsToggle = document.getElementById('settingsToggle');
-  const settingsPanel = document.getElementById('settingsPanel');
-  const cellCountEl = document.getElementById('cellCount');
-  const toastEl = document.getElementById('toast');
-  const canvasWrapper = document.getElementById('canvasWrapper');
+  // Modal editing state
+  let editingIndex = null;
+  let editingFit = null;
+  let editingDataUrl = null;
+  let originalFit = null;
+  let originalDataUrl = null;
+  let pendingReplace = false;
 
-  // ── Unit conversions (to inches) ──
-  function toInches(value, unit) {
-    if (unit === 'in') return value;
-    if (unit === 'cm') return value / 2.54;
-    if (unit === 'px') return value / DPI;
-    return value;
-  }
+  const $ = id => document.getElementById(id);
+  const paper = $('paper');
+  const gridContainer = $('gridContainer');
+  const cellWidthInput = $('cellWidth');
+  const cellHeightInput = $('cellHeight');
+  const unitSelect = $('unitSelect');
+  const marginInput = $('paperMargin');
+  const gridInfo = $('gridInfo');
+  const fileInput = $('fileInput');
+  const canvasWrapper = $('canvasWrapper');
+  const cellCountEl = $('cellCount');
+  const toastEl = $('toast');
 
-  function fromInches(inches, unit) {
-    if (unit === 'in') return inches;
-    if (unit === 'cm') return inches * 2.54;
-    if (unit === 'px') return inches * DPI;
-    return inches;
-  }
+  const modalOverlay = $('modalOverlay');
+  const modalPreviewFrame = $('modalPreviewFrame');
+  const modalPreviewImg = $('modalPreviewImg');
+  const modalFitLabel = $('modalFitLabel');
+  const modalFitBtn = $('modalFitBtn');
+  const modalFitText = $('modalFitText');
+  const modalReplaceBtn = $('modalReplaceBtn');
+  const modalRemoveBtn = $('modalRemoveBtn');
+  const modalCancelBtn = $('modalCancelBtn');
+  const modalAcceptBtn = $('modalAcceptBtn');
+  const modalCellNum = $('modalCellNum');
 
-  // ── Settings toggle ──
-  settingsToggle.addEventListener('click', () => {
-    settingsPanel.classList.toggle('open');
-  });
+  function toInches(v, u) { return u === 'cm' ? v / 2.54 : u === 'px' ? v / DPI : v; }
+  function fromInches(v, u) { return u === 'cm' ? v * 2.54 : u === 'px' ? v * DPI : v; }
 
-  // ── Toast ──
+  $('settingsToggle').addEventListener('click', () => $('settingsPanel').classList.toggle('open'));
+
   let toastTimeout;
   function showToast(msg) {
     toastEl.textContent = msg;
@@ -597,134 +559,53 @@
     toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2000);
   }
 
-  // ── Compute grid ──
   function getGridParams() {
     const unit = unitSelect.value;
     const cellWIn = toInches(parseFloat(cellWidthInput.value) || 0.8, unit);
     const cellHIn = toInches(parseFloat(cellHeightInput.value) || 0.9, unit);
     const marginIn = toInches(parseFloat(marginInput.value) || 0.25, unit);
-
     const usableW = LETTER_W_IN - marginIn * 2;
     const usableH = LETTER_H_IN - marginIn * 2;
-
-    // Account for gaps: N cells + (N-1) gaps must fit
     const cols = Math.max(1, Math.floor((usableW + GAP_IN) / (cellWIn + GAP_IN)));
     const rows = Math.max(1, Math.floor((usableH + GAP_IN) / (cellHIn + GAP_IN)));
-
-    return { cellWIn, cellHIn, marginIn, cols, rows, usableW, usableH };
+    return { cellWIn, cellHIn, marginIn, cols, rows };
   }
 
-  // ── Build grid ──
   function buildGrid() {
     const { cellWIn, cellHIn, marginIn, cols, rows } = getGridParams();
     const unit = unitSelect.value;
-    const totalCells = cols * rows;
+    const total = cols * rows;
 
-    // Scale for screen display
-    const wrapperWidth = canvasWrapper.clientWidth - 20;
-    const paperRealW = LETTER_W_IN;
-    const screenScale = Math.min(1, wrapperWidth / (paperRealW * DPI));
+    const wrapperW = canvasWrapper.clientWidth - 20;
+    const scale = Math.min(1, wrapperW / (LETTER_W_IN * DPI));
 
-    const paperPxW = LETTER_W_IN * DPI * screenScale;
-    const paperPxH = LETTER_H_IN * DPI * screenScale;
-    const cellPxW = cellWIn * DPI * screenScale;
-    const cellPxH = cellHIn * DPI * screenScale;
-    const marginPx = marginIn * DPI * screenScale;
-    const gapPx = GAP_IN * DPI * screenScale;
+    paper.style.width = (LETTER_W_IN * DPI * scale) + 'px';
+    paper.style.height = (LETTER_H_IN * DPI * scale) + 'px';
 
-    paper.style.width = paperPxW + 'px';
-    paper.style.height = paperPxH + 'px';
-
-    gridContainer.style.setProperty('--grid-gap', gapPx + 'px');
-    gridContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellPxW}px)`;
-    gridContainer.style.gridTemplateRows = `repeat(${rows}, ${cellPxH}px)`;
-    gridContainer.style.padding = marginPx + 'px';
-
-    // Store print dimensions as data attributes for print
-    gridContainer.dataset.printCellW = cellWIn;
-    gridContainer.dataset.printCellH = cellHIn;
-    gridContainer.dataset.printMargin = marginIn;
-    gridContainer.dataset.printCols = cols;
-    gridContainer.dataset.printRows = rows;
-
-    // Clear grid
+    gridContainer.style.setProperty('--grid-gap', (GAP_IN * DPI * scale) + 'px');
+    gridContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellWIn * DPI * scale}px)`;
+    gridContainer.style.gridTemplateRows = `repeat(${rows}, ${cellHIn * DPI * scale}px)`;
+    gridContainer.style.padding = (marginIn * DPI * scale) + 'px';
     gridContainer.innerHTML = '';
 
-    // Preserve images that still fit
-    const newImages = {};
-    for (let i = 0; i < totalCells; i++) {
-      if (cellImages[i]) {
-        newImages[i] = cellImages[i];
-      }
-    }
-    cellImages = newImages;
+    const kept = {};
+    for (let i = 0; i < total; i++) { if (cellImages[i]) kept[i] = cellImages[i]; }
+    cellImages = kept;
 
-    // Create cells
-    for (let i = 0; i < totalCells; i++) {
+    for (let i = 0; i < total; i++) {
       const cell = document.createElement('div');
       cell.className = 'grid-cell';
-      cell.dataset.index = i;
 
-      // Placeholder icon
       const ph = document.createElement('div');
       ph.className = 'placeholder-icon';
-      ph.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>`;
+      ph.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
       cell.appendChild(ph);
 
-      // Consolidated action overlay
-      const actions = document.createElement('div');
-      actions.className = 'cell-actions';
+      const badge = document.createElement('div');
+      badge.className = 'edit-badge';
+      badge.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+      cell.appendChild(badge);
 
-      const toolbar = document.createElement('div');
-      toolbar.className = 'cell-toolbar';
-
-      // Fit/Fill toggle button
-      const fitBtn = document.createElement('button');
-      fitBtn.className = 'cell-action-btn fit';
-      const currentFit = cellImages[i]?.fit || 'cover';
-      fitBtn.innerHTML = currentFit === 'cover'
-        ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>`
-        : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M14 4h6v6M20 10l-7 7M4 20l7-7"/></svg>`;
-      fitBtn.title = currentFit === 'cover' ? 'Switch to Fit' : 'Switch to Fill';
-      fitBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (cellImages[i]) {
-          cellImages[i].fit = cellImages[i].fit === 'cover' ? 'contain' : 'cover';
-          buildGrid();
-        }
-      });
-
-      // Replace button
-      const replaceBtn = document.createElement('button');
-      replaceBtn.className = 'cell-action-btn replace';
-      replaceBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>`;
-      replaceBtn.title = 'Replace image';
-      replaceBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        activeCellIndex = i;
-        fileInput.click();
-      });
-
-      // Remove button
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'cell-action-btn remove';
-      removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-      removeBtn.title = 'Remove image';
-      removeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        delete cellImages[i];
-        buildGrid();
-        updateCount();
-        showToast('Image removed');
-      });
-
-      toolbar.appendChild(fitBtn);
-      toolbar.appendChild(replaceBtn);
-      toolbar.appendChild(removeBtn);
-      actions.appendChild(toolbar);
-      cell.appendChild(actions);
-
-      // If image exists
       if (cellImages[i]) {
         const img = document.createElement('img');
         img.src = cellImages[i].dataUrl;
@@ -734,61 +615,147 @@
         cell.classList.add('has-image');
       }
 
-      // Click handler — upload for empty, toggle toolbar for filled (on touch)
-      cell.addEventListener('click', (e) => {
+      cell.addEventListener('click', () => {
         if (cellImages[i]) {
-          // On touch devices, toggle the toolbar visibility
-          if ('ontouchstart' in window) {
-            // Remove .touched from all other cells
-            document.querySelectorAll('.grid-cell.touched').forEach(c => {
-              if (c !== cell) c.classList.remove('touched');
-            });
-            cell.classList.toggle('touched');
-            return;
-          }
+          openModal(i);
+        } else {
+          activeCellIndex = i;
+          pendingReplace = false;
+          fileInput.click();
         }
-        activeCellIndex = i;
-        fileInput.click();
       });
 
       gridContainer.appendChild(cell);
     }
 
-    // Update info
-    const displayW = fromInches(cellWIn, unit).toFixed(unit === 'px' ? 0 : 2);
-    const displayH = fromInches(cellHIn, unit).toFixed(unit === 'px' ? 0 : 2);
-    const unitLabel = unit === 'in' ? '"' : unit === 'cm' ? 'cm' : 'px';
-    gridInfo.innerHTML = `<strong>${cols} × ${rows}</strong> grid · ${displayW}${unitLabel} × ${displayH}${unitLabel} per cell · ${totalCells} cells total`;
-
+    const dW = fromInches(cellWIn, unit).toFixed(unit === 'px' ? 0 : 2);
+    const dH = fromInches(cellHIn, unit).toFixed(unit === 'px' ? 0 : 2);
+    const uL = unit === 'in' ? '"' : unit === 'cm' ? 'cm' : 'px';
+    gridInfo.innerHTML = `<strong>${cols} × ${rows}</strong> grid · ${dW}${uL} × ${dH}${uL} per cell · ${total} cells total`;
     updateCount();
   }
 
   function updateCount() {
-    const count = Object.keys(cellImages).length;
-    cellCountEl.innerHTML = `<strong>${count}</strong> image${count !== 1 ? 's' : ''} placed`;
+    const c = Object.keys(cellImages).length;
+    cellCountEl.innerHTML = `<strong>${c}</strong> image${c !== 1 ? 's' : ''} placed`;
   }
 
-  // ── File input handler ──
+  // ── Modal ──
+  function openModal(index) {
+    editingIndex = index;
+    const data = cellImages[index];
+    if (!data) return;
+
+    editingFit = data.fit || 'cover';
+    editingDataUrl = data.dataUrl;
+    originalFit = editingFit;
+    originalDataUrl = editingDataUrl;
+
+    const { cellWIn, cellHIn, cols } = getGridParams();
+    const row = Math.floor(index / cols) + 1;
+    const col = (index % cols) + 1;
+    modalCellNum.textContent = `Row ${row}, Col ${col}`;
+
+    // Size preview to cell aspect ratio
+    const aspect = cellWIn / cellHIn;
+    const maxW = 260, maxH = 240;
+    let fw, fh;
+    if (aspect >= 1) {
+      fw = maxW; fh = maxW / aspect;
+      if (fh > maxH) { fh = maxH; fw = maxH * aspect; }
+    } else {
+      fh = maxH; fw = maxH * aspect;
+      if (fw > maxW) { fw = maxW; fh = maxW / aspect; }
+    }
+    modalPreviewFrame.style.width = fw + 'px';
+    modalPreviewFrame.style.height = fh + 'px';
+
+    refreshModalPreview();
+    modalOverlay.classList.add('open');
+  }
+
+  function refreshModalPreview() {
+    modalPreviewImg.src = editingDataUrl;
+    modalPreviewImg.style.objectFit = editingFit;
+    const isCover = editingFit === 'cover';
+    modalFitLabel.textContent = isCover ? 'Fill — image cropped to fill cell' : 'Fit — full image visible';
+    modalFitText.textContent = isCover ? 'Switch to Fit' : 'Switch to Fill';
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove('open');
+    editingIndex = null;
+  }
+
+  modalFitBtn.addEventListener('click', () => {
+    editingFit = editingFit === 'cover' ? 'contain' : 'cover';
+    refreshModalPreview();
+  });
+
+  modalReplaceBtn.addEventListener('click', () => {
+    pendingReplace = true;
+    activeCellIndex = editingIndex;
+    fileInput.click();
+  });
+
+  modalRemoveBtn.addEventListener('click', () => {
+    if (editingIndex !== null) {
+      delete cellImages[editingIndex];
+      closeModal();
+      buildGrid();
+      showToast('Image removed');
+    }
+  });
+
+  modalCancelBtn.addEventListener('click', () => {
+    // Revert to originals
+    if (editingIndex !== null && cellImages[editingIndex]) {
+      cellImages[editingIndex].fit = originalFit;
+      cellImages[editingIndex].dataUrl = originalDataUrl;
+    }
+    closeModal();
+  });
+
+  modalAcceptBtn.addEventListener('click', () => {
+    if (editingIndex !== null && cellImages[editingIndex]) {
+      cellImages[editingIndex].fit = editingFit;
+      cellImages[editingIndex].dataUrl = editingDataUrl;
+      buildGrid();
+      showToast('Changes saved');
+    }
+    closeModal();
+  });
+
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) modalCancelBtn.click();
+  });
+
+  // ── File input ──
   fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file || activeCellIndex === null) return;
 
     const reader = new FileReader();
     reader.onload = (ev) => {
-      cellImages[activeCellIndex] = {
-        dataUrl: ev.target.result,
-        fit: cellImages[activeCellIndex]?.fit || 'cover'
-      };
-      buildGrid();
-      showToast('Image added');
+      const url = ev.target.result;
+      if (pendingReplace && editingIndex !== null) {
+        editingDataUrl = url;
+        cellImages[activeCellIndex] = { dataUrl: url, fit: editingFit };
+        refreshModalPreview();
+        pendingReplace = false;
+      } else {
+        cellImages[activeCellIndex] = { dataUrl: url, fit: 'cover' };
+        buildGrid();
+        showToast('Image added');
+      }
     };
     reader.readAsDataURL(file);
     fileInput.value = '';
   });
 
   // ── Clear all ──
-  clearAllBtn.addEventListener('click', () => {
-    if (Object.keys(cellImages).length === 0) return;
+  $('clearAllBtn').addEventListener('click', () => {
+    if (!Object.keys(cellImages).length) return;
     if (confirm('Remove all images from the grid?')) {
       cellImages = {};
       buildGrid();
@@ -797,81 +764,47 @@
   });
 
   // ── Print ──
-  printBtn.addEventListener('click', () => {
-    const { cellWIn, cellHIn, marginIn, cols, rows } = getGridParams();
-
-    // Temporarily set exact print dimensions
+  $('printBtn').addEventListener('click', () => {
+    const { cellWIn, cellHIn, marginIn, cols } = getGridParams();
     paper.style.width = LETTER_W_IN + 'in';
     paper.style.height = LETTER_H_IN + 'in';
     paper.style.maxHeight = LETTER_H_IN + 'in';
     paper.style.overflow = 'hidden';
     gridContainer.style.setProperty('--grid-gap', GAP_IN + 'in');
     gridContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellWIn}in)`;
-    gridContainer.style.gridTemplateRows = `repeat(${rows}, ${cellHIn}in)`;
+    gridContainer.style.gridTemplateRows = `repeat(${getGridParams().rows}, ${cellHIn}in)`;
     gridContainer.style.padding = marginIn + 'in';
-
-    // Remove touched class from all cells before printing
-    document.querySelectorAll('.grid-cell.touched').forEach(c => c.classList.remove('touched'));
-
     window.print();
-
-    // Restore screen dimensions
-    setTimeout(() => buildGrid(), 300);
+    setTimeout(buildGrid, 300);
   });
 
-  // ── Settings inputs ──
+  // ── Settings listeners ──
   let rebuildTimer;
-  function scheduleRebuild() {
-    clearTimeout(rebuildTimer);
-    rebuildTimer = setTimeout(buildGrid, 200);
-  }
-
+  const scheduleRebuild = () => { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(buildGrid, 200); };
   cellWidthInput.addEventListener('input', scheduleRebuild);
   cellHeightInput.addEventListener('input', scheduleRebuild);
   marginInput.addEventListener('input', scheduleRebuild);
 
   unitSelect.addEventListener('change', () => {
-    // Convert current values to new unit
-    const oldUnit = unitSelect.dataset.prevUnit || 'in';
-    const newUnit = unitSelect.value;
-
-    const wIn = toInches(parseFloat(cellWidthInput.value) || 0.8, oldUnit);
-    const hIn = toInches(parseFloat(cellHeightInput.value) || 0.9, oldUnit);
-    const mIn = toInches(parseFloat(marginInput.value) || 0.25, oldUnit);
-
-    const step = newUnit === 'px' ? '1' : '0.05';
-    const decimals = newUnit === 'px' ? 0 : 2;
-
-    cellWidthInput.value = fromInches(wIn, newUnit).toFixed(decimals);
-    cellHeightInput.value = fromInches(hIn, newUnit).toFixed(decimals);
-    marginInput.value = fromInches(mIn, newUnit).toFixed(decimals);
-
-    cellWidthInput.step = step;
-    cellHeightInput.step = step;
-    marginInput.step = step;
-
-    unitSelect.dataset.prevUnit = newUnit;
+    const old = unitSelect.dataset.prevUnit || 'in';
+    const nu = unitSelect.value;
+    const wIn = toInches(parseFloat(cellWidthInput.value) || 0.8, old);
+    const hIn = toInches(parseFloat(cellHeightInput.value) || 0.9, old);
+    const mIn = toInches(parseFloat(marginInput.value) || 0.25, old);
+    const dec = nu === 'px' ? 0 : 2;
+    cellWidthInput.value = fromInches(wIn, nu).toFixed(dec);
+    cellHeightInput.value = fromInches(hIn, nu).toFixed(dec);
+    marginInput.value = fromInches(mIn, nu).toFixed(dec);
+    cellWidthInput.step = cellHeightInput.step = marginInput.step = nu === 'px' ? '1' : '0.05';
+    unitSelect.dataset.prevUnit = nu;
     buildGrid();
   });
 
-  // ── Dismiss toolbar on outside tap (mobile) ──
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.grid-cell')) {
-      document.querySelectorAll('.grid-cell.touched').forEach(c => c.classList.remove('touched'));
-    }
-  });
-
-  // ── Responsive resize ──
   let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(buildGrid, 150);
-  });
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(buildGrid, 150); });
 
-  // ── Init ──
   unitSelect.dataset.prevUnit = 'in';
   buildGrid();
-
 })();
 </script>
 </body>
