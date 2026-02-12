@@ -223,6 +223,7 @@
   .grid-container {
     display: grid;
     position: relative;
+    gap: var(--grid-gap);
   }
 
   .grid-cell {
@@ -263,21 +264,32 @@
 
   .cell-actions {
     position: absolute;
-    top: 2px;
-    right: 2px;
+    inset: 0;
     display: none;
-    gap: 2px;
+    align-items: center;
+    justify-content: center;
     z-index: 5;
+    background: rgba(0,0,0,0.3);
+  }
+
+  .cell-toolbar {
+    display: flex;
+    gap: 4px;
+    background: rgba(40,35,30,0.85);
+    border-radius: 6px;
+    padding: 3px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
   }
 
   .grid-cell.has-image:hover .cell-actions,
-  .grid-cell.has-image:active .cell-actions {
+  .grid-cell.has-image.touched .cell-actions {
     display: flex;
   }
 
   .cell-action-btn {
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 24px;
     border-radius: 4px;
     border: none;
     cursor: pointer;
@@ -286,48 +298,21 @@
     justify-content: center;
     font-size: 11px;
     transition: all 0.1s ease;
-  }
-
-  .cell-action-btn.remove {
-    background: rgba(200,50,50,0.85);
+    background: transparent;
     color: #fff;
   }
-  .cell-action-btn.remove:hover { background: rgba(200,50,50,1); }
-
-  .cell-action-btn.replace {
-    background: rgba(60,60,60,0.7);
-    color: #fff;
-  }
-  .cell-action-btn.replace:hover { background: rgba(60,60,60,0.9); }
-
-  /* ── Fit mode selector on cell ── */
-  .fit-toggle {
-    position: absolute;
-    bottom: 2px;
-    left: 2px;
-    display: none;
-    z-index: 5;
+  .cell-action-btn:hover, .cell-action-btn:active {
+    background: rgba(255,255,255,0.2);
   }
 
-  .grid-cell.has-image:hover .fit-toggle,
-  .grid-cell.has-image:active .fit-toggle {
-    display: flex;
+  .cell-action-btn.remove:hover, .cell-action-btn.remove:active {
+    background: rgba(200,50,50,0.7);
   }
 
-  .fit-toggle-btn {
-    padding: 2px 5px;
-    font-size: 9px;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    border-radius: 3px;
-    border: none;
-    background: rgba(60,60,60,0.7);
-    color: #fff;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+  .cell-action-btn svg {
+    width: 13px;
+    height: 13px;
   }
-  .fit-toggle-btn:hover { background: rgba(60,60,60,0.9); }
 
   /* ── Bottom bar ── */
   .bottom-bar {
@@ -394,20 +379,36 @@
       margin: 0;
     }
 
-    body {
+    html, body {
+      width: 8.5in;
+      height: 11in;
+      overflow: hidden !important;
       background: #fff !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
 
     .app-header, .settings-panel, .bottom-bar, .toast,
-    .cell-actions, .fit-toggle, .placeholder-icon {
+    .cell-actions, .placeholder-icon, .main-content {
+      display: contents !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .app-header, .settings-panel, .bottom-bar, .toast,
+    .cell-actions, .placeholder-icon {
       display: none !important;
+    }
+
+    .main-content {
+      padding: 0 !important;
     }
 
     .canvas-wrapper {
       padding: 0 !important;
-      overflow: visible !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      display: block !important;
     }
 
     .paper {
@@ -415,11 +416,11 @@
       border-radius: 0 !important;
       width: 8.5in !important;
       height: 11in !important;
+      max-height: 11in !important;
       margin: 0 !important;
-    }
-
-    .grid-container {
-      /* Grid template set inline by JS */
+      overflow: hidden !important;
+      page-break-after: avoid !important;
+      break-after: avoid !important;
     }
 
     .grid-cell {
@@ -448,17 +449,20 @@
     padding-bottom: 70px;
   }
 
-  /* Long-press support for mobile */
+  /* Touch device support - show toolbar on tap */
   @media (hover: none) {
     .grid-cell.has-image .cell-actions {
-      display: flex;
+      /* controlled by .touched class via JS */
     }
-    .grid-cell.has-image .fit-toggle {
-      display: flex;
+    .cell-action-btn {
+      width: 32px;
+      height: 28px;
+      font-size: 13px;
     }
-    .cell-actions { top: 1px; right: 1px; }
-    .cell-action-btn { width: 26px; height: 26px; font-size: 12px; }
-    .fit-toggle-btn { padding: 3px 6px; font-size: 10px; }
+    .cell-action-btn svg {
+      width: 15px;
+      height: 15px;
+    }
   }
 </style>
 </head>
@@ -541,6 +545,7 @@
   const LETTER_W_IN = 8.5;
   const LETTER_H_IN = 11;
   const DPI = 96; // CSS reference DPI
+  const GAP_IN = 0.025; // ~0.6mm gap between cells
 
   // ── State ──
   let cellImages = {}; // { cellIndex: { dataUrl, fit } }
@@ -602,8 +607,9 @@
     const usableW = LETTER_W_IN - marginIn * 2;
     const usableH = LETTER_H_IN - marginIn * 2;
 
-    const cols = Math.max(1, Math.floor(usableW / cellWIn));
-    const rows = Math.max(1, Math.floor(usableH / cellHIn));
+    // Account for gaps: N cells + (N-1) gaps must fit
+    const cols = Math.max(1, Math.floor((usableW + GAP_IN) / (cellWIn + GAP_IN)));
+    const rows = Math.max(1, Math.floor((usableH + GAP_IN) / (cellHIn + GAP_IN)));
 
     return { cellWIn, cellHIn, marginIn, cols, rows, usableW, usableH };
   }
@@ -624,10 +630,12 @@
     const cellPxW = cellWIn * DPI * screenScale;
     const cellPxH = cellHIn * DPI * screenScale;
     const marginPx = marginIn * DPI * screenScale;
+    const gapPx = GAP_IN * DPI * screenScale;
 
     paper.style.width = paperPxW + 'px';
     paper.style.height = paperPxH + 'px';
 
+    gridContainer.style.setProperty('--grid-gap', gapPx + 'px');
     gridContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellPxW}px)`;
     gridContainer.style.gridTemplateRows = `repeat(${rows}, ${cellPxH}px)`;
     gridContainer.style.padding = marginPx + 'px';
@@ -663,13 +671,33 @@
       ph.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>`;
       cell.appendChild(ph);
 
-      // Action buttons
+      // Consolidated action overlay
       const actions = document.createElement('div');
       actions.className = 'cell-actions';
 
+      const toolbar = document.createElement('div');
+      toolbar.className = 'cell-toolbar';
+
+      // Fit/Fill toggle button
+      const fitBtn = document.createElement('button');
+      fitBtn.className = 'cell-action-btn fit';
+      const currentFit = cellImages[i]?.fit || 'cover';
+      fitBtn.innerHTML = currentFit === 'cover'
+        ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M14 4h6v6M20 10l-7 7M4 20l7-7"/></svg>`;
+      fitBtn.title = currentFit === 'cover' ? 'Switch to Fit' : 'Switch to Fill';
+      fitBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (cellImages[i]) {
+          cellImages[i].fit = cellImages[i].fit === 'cover' ? 'contain' : 'cover';
+          buildGrid();
+        }
+      });
+
+      // Replace button
       const replaceBtn = document.createElement('button');
       replaceBtn.className = 'cell-action-btn replace';
-      replaceBtn.innerHTML = '↻';
+      replaceBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>`;
       replaceBtn.title = 'Replace image';
       replaceBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -677,9 +705,10 @@
         fileInput.click();
       });
 
+      // Remove button
       const removeBtn = document.createElement('button');
       removeBtn.className = 'cell-action-btn remove';
-      removeBtn.innerHTML = '✕';
+      removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
       removeBtn.title = 'Remove image';
       removeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -689,26 +718,11 @@
         showToast('Image removed');
       });
 
-      actions.appendChild(replaceBtn);
-      actions.appendChild(removeBtn);
+      toolbar.appendChild(fitBtn);
+      toolbar.appendChild(replaceBtn);
+      toolbar.appendChild(removeBtn);
+      actions.appendChild(toolbar);
       cell.appendChild(actions);
-
-      // Fit toggle
-      const fitToggle = document.createElement('div');
-      fitToggle.className = 'fit-toggle';
-      const fitBtn = document.createElement('button');
-      fitBtn.className = 'fit-toggle-btn';
-      const currentFit = cellImages[i]?.fit || 'cover';
-      fitBtn.textContent = currentFit === 'cover' ? 'Fill' : 'Fit';
-      fitBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (cellImages[i]) {
-          cellImages[i].fit = cellImages[i].fit === 'cover' ? 'contain' : 'cover';
-          buildGrid();
-        }
-      });
-      fitToggle.appendChild(fitBtn);
-      cell.appendChild(fitToggle);
 
       // If image exists
       if (cellImages[i]) {
@@ -720,8 +734,19 @@
         cell.classList.add('has-image');
       }
 
-      // Click to upload
-      cell.addEventListener('click', () => {
+      // Click handler — upload for empty, toggle toolbar for filled (on touch)
+      cell.addEventListener('click', (e) => {
+        if (cellImages[i]) {
+          // On touch devices, toggle the toolbar visibility
+          if ('ontouchstart' in window) {
+            // Remove .touched from all other cells
+            document.querySelectorAll('.grid-cell.touched').forEach(c => {
+              if (c !== cell) c.classList.remove('touched');
+            });
+            cell.classList.toggle('touched');
+            return;
+          }
+        }
         activeCellIndex = i;
         fileInput.click();
       });
@@ -778,9 +803,15 @@
     // Temporarily set exact print dimensions
     paper.style.width = LETTER_W_IN + 'in';
     paper.style.height = LETTER_H_IN + 'in';
+    paper.style.maxHeight = LETTER_H_IN + 'in';
+    paper.style.overflow = 'hidden';
+    gridContainer.style.setProperty('--grid-gap', GAP_IN + 'in');
     gridContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellWIn}in)`;
     gridContainer.style.gridTemplateRows = `repeat(${rows}, ${cellHIn}in)`;
     gridContainer.style.padding = marginIn + 'in';
+
+    // Remove touched class from all cells before printing
+    document.querySelectorAll('.grid-cell.touched').forEach(c => c.classList.remove('touched'));
 
     window.print();
 
@@ -821,6 +852,13 @@
 
     unitSelect.dataset.prevUnit = newUnit;
     buildGrid();
+  });
+
+  // ── Dismiss toolbar on outside tap (mobile) ──
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.grid-cell')) {
+      document.querySelectorAll('.grid-cell.touched').forEach(c => c.classList.remove('touched'));
+    }
   });
 
   // ── Responsive resize ──
