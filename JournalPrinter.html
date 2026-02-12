@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Journal Grid Cutter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0ea;
+    --bg-warm: #efe8df;
+    --surface: #ffffff;
+    --text: #2c2420;
+    --text-muted: #8a7e74;
+    --accent: #c4704b;
+    --accent-hover: #a85a38;
+    --accent-light: #f0ddd4;
+    --border: #d9cfc4;
+    --border-light: #e8e0d6;
+    --shadow-sm: 0 1px 3px rgba(44,36,32,0.06);
+    --shadow-md: 0 4px 12px rgba(44,36,32,0.08);
+    --shadow-lg: 0 8px 30px rgba(44,36,32,0.12);
+    --radius: 10px;
+    --grid-line: #c8bfb4;
+    --cell-empty: #faf7f3;
+    --cell-hover: #f5efe8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-light);
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .header-inner {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .app-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+    line-height: 1.1;
+  }
+
+  .app-title span {
+    display: block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 10px 16px;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:active { transform: scale(0.97); }
+
+  .btn-secondary {
+    background: var(--bg-warm);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--border-light); }
+
+  .btn-icon {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn-icon:hover { background: var(--border-light); }
+  .btn-icon svg { width: 18px; height: 18px; color: var(--text); }
+
+  /* ── Settings Panel ── */
+  .settings-panel {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-light);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+  .settings-panel.open {
+    max-height: 400px;
+    padding: 16px 20px;
+  }
+
+  .settings-inner {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .settings-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .field {
+    flex: 1;
+    min-width: 90px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+  }
+
+  .field input, .field select {
+    width: 100%;
+    padding: 9px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color 0.15s ease;
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .grid-info {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .grid-info strong { color: var(--text); }
+
+  /* ── Canvas Area ── */
+  .canvas-wrapper {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .paper {
+    background: #fff;
+    box-shadow: var(--shadow-lg);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    /* Dimensions set by JS based on screen vs print */
+  }
+
+  .paper-margin {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+  }
+
+  .grid-container {
+    display: grid;
+    position: relative;
+  }
+
+  .grid-cell {
+    border: 0.5px dashed var(--grid-line);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.12s ease;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .grid-cell:hover {
+    background: var(--cell-hover);
+  }
+
+  .grid-cell.has-image:hover {
+    background: transparent;
+  }
+
+  .grid-cell .placeholder-icon {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    color: var(--border);
+  }
+  .grid-cell:hover .placeholder-icon {
+    opacity: 1;
+  }
+  .grid-cell.has-image .placeholder-icon { display: none; }
+
+  .grid-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .cell-actions {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: none;
+    gap: 2px;
+    z-index: 5;
+  }
+
+  .grid-cell.has-image:hover .cell-actions,
+  .grid-cell.has-image:active .cell-actions {
+    display: flex;
+  }
+
+  .cell-action-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: all 0.1s ease;
+  }
+
+  .cell-action-btn.remove {
+    background: rgba(200,50,50,0.85);
+    color: #fff;
+  }
+  .cell-action-btn.remove:hover { background: rgba(200,50,50,1); }
+
+  .cell-action-btn.replace {
+    background: rgba(60,60,60,0.7);
+    color: #fff;
+  }
+  .cell-action-btn.replace:hover { background: rgba(60,60,60,0.9); }
+
+  /* ── Fit mode selector on cell ── */
+  .fit-toggle {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    display: none;
+    z-index: 5;
+  }
+
+  .grid-cell.has-image:hover .fit-toggle,
+  .grid-cell.has-image:active .fit-toggle {
+    display: flex;
+  }
+
+  .fit-toggle-btn {
+    padding: 2px 5px;
+    font-size: 9px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    border-radius: 3px;
+    border: none;
+    background: rgba(60,60,60,0.7);
+    color: #fff;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .fit-toggle-btn:hover { background: rgba(60,60,60,0.9); }
+
+  /* ── Bottom bar ── */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border-light);
+    padding: 12px 20px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    z-index: 100;
+    box-shadow: 0 -2px 12px rgba(44,36,32,0.06);
+  }
+
+  .bottom-inner {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .cell-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .cell-count strong { color: var(--accent); }
+
+  /* ── Hidden file input ── */
+  #fileInput {
+    display: none;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+    z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── Print Styles ── */
+  @media print {
+    @page {
+      size: letter;
+      margin: 0;
+    }
+
+    body {
+      background: #fff !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .app-header, .settings-panel, .bottom-bar, .toast,
+    .cell-actions, .fit-toggle, .placeholder-icon {
+      display: none !important;
+    }
+
+    .canvas-wrapper {
+      padding: 0 !important;
+      overflow: visible !important;
+    }
+
+    .paper {
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      width: 8.5in !important;
+      height: 11in !important;
+      margin: 0 !important;
+    }
+
+    .grid-container {
+      /* Grid template set inline by JS */
+    }
+
+    .grid-cell {
+      border: 0.5px dashed #ccc !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .grid-cell img {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 500px) {
+    .app-header { padding: 12px 16px; }
+    .app-title { font-size: 17px; }
+    .canvas-wrapper { padding: 16px 10px; padding-bottom: 80px; }
+    .settings-panel.open { padding: 12px 16px; }
+    .btn { padding: 9px 12px; font-size: 12px; }
+  }
+
+  /* body padding for fixed bottom bar */
+  .main-content {
+    padding-bottom: 70px;
+  }
+
+  /* Long-press support for mobile */
+  @media (hover: none) {
+    .grid-cell.has-image .cell-actions {
+      display: flex;
+    }
+    .grid-cell.has-image .fit-toggle {
+      display: flex;
+    }
+    .cell-actions { top: 1px; right: 1px; }
+    .cell-action-btn { width: 26px; height: 26px; font-size: 12px; }
+    .fit-toggle-btn { padding: 3px 6px; font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="app-title">
+      Grid Cutter
+      <span>Journal Sticker Printer</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" id="settingsToggle" title="Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <button class="btn btn-secondary" id="clearAllBtn">Clear All</button>
+    </div>
+  </div>
+</header>
+
+<!-- Settings Panel -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-inner">
+    <div class="settings-row">
+      <div class="field">
+        <label>Width</label>
+        <input type="number" id="cellWidth" value="0.8" step="0.05" min="0.1">
+      </div>
+      <div class="field">
+        <label>Height</label>
+        <input type="number" id="cellHeight" value="0.9" step="0.05" min="0.1">
+      </div>
+      <div class="field">
+        <label>Unit</label>
+        <select id="unitSelect">
+          <option value="in" selected>Inches</option>
+          <option value="cm">Centimeters</option>
+          <option value="px">Pixels</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Margin</label>
+        <input type="number" id="paperMargin" value="0.25" step="0.05" min="0">
+      </div>
+    </div>
+    <div class="grid-info" id="gridInfo"></div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+  <div class="canvas-wrapper" id="canvasWrapper">
+    <div class="paper" id="paper">
+      <div class="grid-container" id="gridContainer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Bar -->
+<div class="bottom-bar">
+  <div class="bottom-inner">
+    <div class="cell-count" id="cellCount">0 images placed</div>
+    <button class="btn btn-primary" id="printBtn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print
+    </button>
+  </div>
+</div>
+
+<!-- Hidden file input -->
+<input type="file" id="fileInput" accept="image/*">
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  // ── Constants ──
+  const LETTER_W_IN = 8.5;
+  const LETTER_H_IN = 11;
+  const DPI = 96; // CSS reference DPI
+
+  // ── State ──
+  let cellImages = {}; // { cellIndex: { dataUrl, fit } }
+  let activeCellIndex = null;
+
+  // ── Elements ──
+  const paper = document.getElementById('paper');
+  const gridContainer = document.getElementById('gridContainer');
+  const cellWidthInput = document.getElementById('cellWidth');
+  const cellHeightInput = document.getElementById('cellHeight');
+  const unitSelect = document.getElementById('unitSelect');
+  const marginInput = document.getElementById('paperMargin');
+  const gridInfo = document.getElementById('gridInfo');
+  const fileInput = document.getElementById('fileInput');
+  const printBtn = document.getElementById('printBtn');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+  const settingsToggle = document.getElementById('settingsToggle');
+  const settingsPanel = document.getElementById('settingsPanel');
+  const cellCountEl = document.getElementById('cellCount');
+  const toastEl = document.getElementById('toast');
+  const canvasWrapper = document.getElementById('canvasWrapper');
+
+  // ── Unit conversions (to inches) ──
+  function toInches(value, unit) {
+    if (unit === 'in') return value;
+    if (unit === 'cm') return value / 2.54;
+    if (unit === 'px') return value / DPI;
+    return value;
+  }
+
+  function fromInches(inches, unit) {
+    if (unit === 'in') return inches;
+    if (unit === 'cm') return inches * 2.54;
+    if (unit === 'px') return inches * DPI;
+    return inches;
+  }
+
+  // ── Settings toggle ──
+  settingsToggle.addEventListener('click', () => {
+    settingsPanel.classList.toggle('open');
+  });
+
+  // ── Toast ──
+  let toastTimeout;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2000);
+  }
+
+  // ── Compute grid ──
+  function getGridParams() {
+    const unit = unitSelect.value;
+    const cellWIn = toInches(parseFloat(cellWidthInput.value) || 0.8, unit);
+    const cellHIn = toInches(parseFloat(cellHeightInput.value) || 0.9, unit);
+    const marginIn = toInches(parseFloat(marginInput.value) || 0.25, unit);
+
+    const usableW = LETTER_W_IN - marginIn * 2;
+    const usableH = LETTER_H_IN - marginIn * 2;
+
+    const cols = Math.max(1, Math.floor(usableW / cellWIn));
+    const rows = Math.max(1, Math.floor(usableH / cellHIn));
+
+    return { cellWIn, cellHIn, marginIn, cols, rows, usableW, usableH };
+  }
+
+  // ── Build grid ──
+  function buildGrid() {
+    const { cellWIn, cellHIn, marginIn, cols, rows } = getGridParams();
+    const unit = unitSelect.value;
+    const totalCells = cols * rows;
+
+    // Scale for screen display
+    const wrapperWidth = canvasWrapper.clientWidth - 20;
+    const paperRealW = LETTER_W_IN;
+    const screenScale = Math.min(1, wrapperWidth / (paperRealW * DPI));
+
+    const paperPxW = LETTER_W_IN * DPI * screenScale;
+    const paperPxH = LETTER_H_IN * DPI * screenScale;
+    const cellPxW = cellWIn * DPI * screenScale;
+    const cellPxH = cellHIn * DPI * screenScale;
+    const marginPx = marginIn * DPI * screenScale;
+
+    paper.style.width = paperPxW + 'px';
+    paper.style.height = paperPxH + 'px';
+
+    gridContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellPxW}px)`;
+    gridContainer.style.gridTemplateRows = `repeat(${rows}, ${cellPxH}px)`;
+    gridContainer.style.padding = marginPx + 'px';
+
+    // Store print dimensions as data attributes for print
+    gridContainer.dataset.printCellW = cellWIn;
+    gridContainer.dataset.printCellH = cellHIn;
+    gridContainer.dataset.printMargin = marginIn;
+    gridContainer.dataset.printCols = cols;
+    gridContainer.dataset.printRows = rows;
+
+    // Clear grid
+    gridContainer.innerHTML = '';
+
+    // Preserve images that still fit
+    const newImages = {};
+    for (let i = 0; i < totalCells; i++) {
+      if (cellImages[i]) {
+        newImages[i] = cellImages[i];
+      }
+    }
+    cellImages = newImages;
+
+    // Create cells
+    for (let i = 0; i < totalCells; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'grid-cell';
+      cell.dataset.index = i;
+
+      // Placeholder icon
+      const ph = document.createElement('div');
+      ph.className = 'placeholder-icon';
+      ph.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>`;
+      cell.appendChild(ph);
+
+      // Action buttons
+      const actions = document.createElement('div');
+      actions.className = 'cell-actions';
+
+      const replaceBtn = document.createElement('button');
+      replaceBtn.className = 'cell-action-btn replace';
+      replaceBtn.innerHTML = '↻';
+      replaceBtn.title = 'Replace image';
+      replaceBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        activeCellIndex = i;
+        fileInput.click();
+      });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'cell-action-btn remove';
+      removeBtn.innerHTML = '✕';
+      removeBtn.title = 'Remove image';
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        delete cellImages[i];
+        buildGrid();
+        updateCount();
+        showToast('Image removed');
+      });
+
+      actions.appendChild(replaceBtn);
+      actions.appendChild(removeBtn);
+      cell.appendChild(actions);
+
+      // Fit toggle
+      const fitToggle = document.createElement('div');
+      fitToggle.className = 'fit-toggle';
+      const fitBtn = document.createElement('button');
+      fitBtn.className = 'fit-toggle-btn';
+      const currentFit = cellImages[i]?.fit || 'cover';
+      fitBtn.textContent = currentFit === 'cover' ? 'Fill' : 'Fit';
+      fitBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (cellImages[i]) {
+          cellImages[i].fit = cellImages[i].fit === 'cover' ? 'contain' : 'cover';
+          buildGrid();
+        }
+      });
+      fitToggle.appendChild(fitBtn);
+      cell.appendChild(fitToggle);
+
+      // If image exists
+      if (cellImages[i]) {
+        const img = document.createElement('img');
+        img.src = cellImages[i].dataUrl;
+        img.style.objectFit = cellImages[i].fit || 'cover';
+        img.draggable = false;
+        cell.appendChild(img);
+        cell.classList.add('has-image');
+      }
+
+      // Click to upload
+      cell.addEventListener('click', () => {
+        activeCellIndex = i;
+        fileInput.click();
+      });
+
+      gridContainer.appendChild(cell);
+    }
+
+    // Update info
+    const displayW = fromInches(cellWIn, unit).toFixed(unit === 'px' ? 0 : 2);
+    const displayH = fromInches(cellHIn, unit).toFixed(unit === 'px' ? 0 : 2);
+    const unitLabel = unit === 'in' ? '"' : unit === 'cm' ? 'cm' : 'px';
+    gridInfo.innerHTML = `<strong>${cols} × ${rows}</strong> grid · ${displayW}${unitLabel} × ${displayH}${unitLabel} per cell · ${totalCells} cells total`;
+
+    updateCount();
+  }
+
+  function updateCount() {
+    const count = Object.keys(cellImages).length;
+    cellCountEl.innerHTML = `<strong>${count}</strong> image${count !== 1 ? 's' : ''} placed`;
+  }
+
+  // ── File input handler ──
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file || activeCellIndex === null) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      cellImages[activeCellIndex] = {
+        dataUrl: ev.target.result,
+        fit: cellImages[activeCellIndex]?.fit || 'cover'
+      };
+      buildGrid();
+      showToast('Image added');
+    };
+    reader.readAsDataURL(file);
+    fileInput.value = '';
+  });
+
+  // ── Clear all ──
+  clearAllBtn.addEventListener('click', () => {
+    if (Object.keys(cellImages).length === 0) return;
+    if (confirm('Remove all images from the grid?')) {
+      cellImages = {};
+      buildGrid();
+      showToast('All images cleared');
+    }
+  });
+
+  // ── Print ──
+  printBtn.addEventListener('click', () => {
+    const { cellWIn, cellHIn, marginIn, cols, rows } = getGridParams();
+
+    // Temporarily set exact print dimensions
+    paper.style.width = LETTER_W_IN + 'in';
+    paper.style.height = LETTER_H_IN + 'in';
+    gridContainer.style.gridTemplateColumns = `repeat(${cols}, ${cellWIn}in)`;
+    gridContainer.style.gridTemplateRows = `repeat(${rows}, ${cellHIn}in)`;
+    gridContainer.style.padding = marginIn + 'in';
+
+    window.print();
+
+    // Restore screen dimensions
+    setTimeout(() => buildGrid(), 300);
+  });
+
+  // ── Settings inputs ──
+  let rebuildTimer;
+  function scheduleRebuild() {
+    clearTimeout(rebuildTimer);
+    rebuildTimer = setTimeout(buildGrid, 200);
+  }
+
+  cellWidthInput.addEventListener('input', scheduleRebuild);
+  cellHeightInput.addEventListener('input', scheduleRebuild);
+  marginInput.addEventListener('input', scheduleRebuild);
+
+  unitSelect.addEventListener('change', () => {
+    // Convert current values to new unit
+    const oldUnit = unitSelect.dataset.prevUnit || 'in';
+    const newUnit = unitSelect.value;
+
+    const wIn = toInches(parseFloat(cellWidthInput.value) || 0.8, oldUnit);
+    const hIn = toInches(parseFloat(cellHeightInput.value) || 0.9, oldUnit);
+    const mIn = toInches(parseFloat(marginInput.value) || 0.25, oldUnit);
+
+    const step = newUnit === 'px' ? '1' : '0.05';
+    const decimals = newUnit === 'px' ? 0 : 2;
+
+    cellWidthInput.value = fromInches(wIn, newUnit).toFixed(decimals);
+    cellHeightInput.value = fromInches(hIn, newUnit).toFixed(decimals);
+    marginInput.value = fromInches(mIn, newUnit).toFixed(decimals);
+
+    cellWidthInput.step = step;
+    cellHeightInput.step = step;
+    marginInput.step = step;
+
+    unitSelect.dataset.prevUnit = newUnit;
+    buildGrid();
+  });
+
+  // ── Responsive resize ──
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(buildGrid, 150);
+  });
+
+  // ── Init ──
+  unitSelect.dataset.prevUnit = 'in';
+  buildGrid();
+
+})();
+</script>
+</body>
+</html>
