@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Journal Grid Cutter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0ea;
+    --bg-warm: #efe8df;
+    --surface: #ffffff;
+    --text: #2c2420;
+    --text-muted: #8a7e74;
+    --accent: #c4704b;
+    --accent-hover: #a85a38;
+    --accent-light: #f0ddd4;
+    --border: #d9cfc4;
+    --border-light: #e8e0d6;
+    --shadow-sm: 0 1px 3px rgba(44,36,32,0.06);
+    --shadow-lg: 0 8px 30px rgba(44,36,32,0.12);
+    --grid-line: #c8bfb4;
+    --cell-hover: #f5efe8;
+    --danger: #c0392b;
+    --overlay-border: #a0c4e8;
+    --overlay-bg: rgba(200,220,240,0.12);
+    --overlay-header: rgba(180,210,240,0.25);
+    --overlay-daynum: rgba(180,210,240,0.10);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-light);
+    padding: 14px 20px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: var(--shadow-sm);
+  }
+  .header-inner {
+    max-width: 900px; margin: 0 auto;
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 12px;
+  }
+  .app-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 700;
+    letter-spacing: -0.3px; line-height: 1.1;
+  }
+  .app-title span {
+    display: block; font-family: 'DM Sans', sans-serif;
+    font-size: 11px; font-weight: 500;
+    color: var(--text-muted); letter-spacing: 0.5px;
+    text-transform: uppercase; margin-top: 2px;
+  }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* ── Buttons ── */
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer; border-radius: 8px;
+    padding: 10px 16px; transition: all 0.15s ease;
+    display: inline-flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-secondary {
+    background: var(--bg-warm); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--border-light); }
+
+  .btn-icon {
+    width: 38px; height: 38px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; background: var(--bg-warm);
+    border: 1px solid var(--border); cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn-icon:hover { background: var(--border-light); }
+  .btn-icon svg { width: 18px; height: 18px; color: var(--text); }
+
+  /* ── Settings Panel ── */
+  .settings-panel {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-light);
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+  .settings-panel.open { max-height: 500px; padding: 16px 20px; }
+  .settings-inner { max-width: 900px; margin: 0 auto; }
+
+  .settings-row {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+  }
+  .settings-row + .settings-row { margin-top: 10px; }
+
+  .field { flex: 1; min-width: 80px; }
+  .field.field-wide { min-width: 120px; flex: 1.5; }
+
+  .field label {
+    display: block; font-size: 10px; font-weight: 600;
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+  .field input, .field select {
+    width: 100%; padding: 8px 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--bg); color: var(--text);
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus {
+    outline: none; border-color: var(--accent);
+  }
+
+  .toggle-field {
+    display: flex; align-items: center; gap: 8px;
+    min-width: 100px; padding-bottom: 2px;
+  }
+  .toggle-field label {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.5px; margin: 0;
+  }
+  .toggle-switch {
+    position: relative; width: 40px; height: 22px;
+    background: var(--border); border-radius: 11px;
+    cursor: pointer; transition: background 0.2s ease;
+    flex-shrink: 0;
+  }
+  .toggle-switch.active { background: var(--accent); }
+  .toggle-switch::after {
+    content: ''; position: absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    background: #fff; border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .toggle-switch.active::after { transform: translateX(18px); }
+
+  .grid-info {
+    margin-top: 10px; font-size: 12px;
+    color: var(--text-muted); font-weight: 500;
+  }
+  .grid-info strong { color: var(--text); }
+
+  /* ── Canvas ── */
+  .canvas-wrapper {
+    padding: 20px; display: flex; justify-content: center;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+
+  .paper {
+    background: #fff; box-shadow: var(--shadow-lg);
+    border-radius: 4px; position: relative;
+    overflow: hidden; flex-shrink: 0;
+  }
+
+  .template-layer, .image-layer {
+    position: absolute; top: 0; left: 0;
+  }
+
+  /* ── Template overlay elements ── */
+  .tpl-header {
+    position: absolute;
+    background: var(--overlay-header);
+    border: 1px solid var(--overlay-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+    color: #5a8ab5; letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-radius: 2px;
+    user-select: none;
+  }
+  .tpl-day-rect {
+    position: absolute;
+    border: 1px solid var(--overlay-border);
+    background: var(--overlay-bg);
+    border-radius: 1px;
+  }
+  .tpl-day-num-row {
+    position: absolute;
+    border-bottom: 1px dotted var(--overlay-border);
+    background: var(--overlay-daynum);
+  }
+  .tpl-page-gap {
+    position: absolute;
+    background: repeating-linear-gradient(
+      90deg, transparent, transparent 2px, rgba(160,196,232,0.15) 2px, rgba(160,196,232,0.15) 4px
+    );
+  }
+
+  /* ── Image cells ── */
+  .img-cell {
+    position: absolute;
+    outline: 1px dashed var(--grid-line);
+    outline-offset: -0.5px;
+    cursor: pointer;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.1s ease;
+    z-index: 2;
+  }
+  .img-cell:hover { background: var(--cell-hover); }
+  .img-cell.has-image:hover { background: transparent; }
+
+  .img-cell .placeholder-icon {
+    opacity: 0; transition: opacity 0.15s ease; color: var(--border);
+  }
+  .img-cell:hover .placeholder-icon { opacity: 1; }
+  .img-cell.has-image .placeholder-icon { display: none; }
+
+  .img-cell .edit-badge {
+    position: absolute; top: 1px; right: 1px;
+    width: 14px; height: 14px; border-radius: 3px;
+    background: rgba(0,0,0,0.4);
+    display: none; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .img-cell .edit-badge svg { width: 8px; height: 8px; color: #fff; }
+  .img-cell.has-image .edit-badge { display: flex; }
+
+  .img-cell img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(30,25,20,0.55);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .modal {
+    background: var(--surface); border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    width: 100%; max-width: 340px; overflow: hidden;
+    transform: scale(0.93) translateY(10px);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+
+  .modal-header {
+    padding: 16px 20px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 15px; font-weight: 700; }
+  .modal-cell-num { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+
+  .modal-preview {
+    padding: 0 20px; display: flex; justify-content: center;
+  }
+  .modal-preview-frame {
+    position: relative;
+    background: repeating-conic-gradient(#e8e0d6 0% 25%, #f5f0ea 0% 50%) 50% / 16px 16px;
+    border: 2px solid var(--border); border-radius: 8px;
+    overflow: hidden; display: flex; align-items: center; justify-content: center;
+  }
+  .modal-preview-frame img { width: 100%; height: 100%; display: block; }
+
+  .modal-fit-label {
+    text-align: center; padding: 10px 0 0;
+    font-size: 11px; font-weight: 600;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  .modal-actions { padding: 16px 20px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .modal-action-row { display: flex; gap: 8px; }
+
+  .modal-btn {
+    flex: 1; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer; border-radius: 10px;
+    padding: 12px 14px; transition: all 0.15s ease;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+  }
+  .modal-btn:active { transform: scale(0.97); }
+  .modal-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .modal-btn-fit {
+    background: var(--bg-warm); color: var(--text); border: 1px solid var(--border);
+  }
+  .modal-btn-fit:hover { background: var(--border-light); }
+  .modal-btn-replace {
+    background: var(--bg-warm); color: var(--text); border: 1px solid var(--border);
+  }
+  .modal-btn-replace:hover { background: var(--border-light); }
+  .modal-btn-remove {
+    background: #fdf0ee; color: var(--danger); border: 1px solid #e8c4bf;
+  }
+  .modal-btn-remove:hover { background: #fbe3df; }
+
+  .modal-confirm-row { display: flex; gap: 8px; padding: 4px 20px 20px; }
+  .modal-btn-cancel {
+    flex: 1; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600;
+    border: 1px solid var(--border); cursor: pointer;
+    border-radius: 10px; padding: 13px 14px;
+    background: var(--surface); color: var(--text-muted);
+  }
+  .modal-btn-cancel:hover { background: var(--bg); }
+  .modal-btn-cancel:active { transform: scale(0.97); }
+  .modal-btn-accept {
+    flex: 1.5; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600; border: none;
+    cursor: pointer; border-radius: 10px; padding: 13px 14px;
+    background: var(--accent); color: #fff;
+  }
+  .modal-btn-accept:hover { background: var(--accent-hover); }
+  .modal-btn-accept:active { transform: scale(0.97); }
+
+  /* ── Bottom bar ── */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface); border-top: 1px solid var(--border-light);
+    padding: 12px 20px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    z-index: 100; box-shadow: 0 -2px 12px rgba(44,36,32,0.06);
+  }
+  .bottom-inner {
+    max-width: 900px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  }
+  .cell-count { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .cell-count strong { color: var(--accent); }
+
+  #fileInput { display: none; }
+
+  .toast {
+    position: fixed; bottom: 80px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: #fff;
+    padding: 10px 20px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    opacity: 0; pointer-events: none;
+    transition: all 0.25s ease; z-index: 200; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Print ── */
+  @media print {
+    @page { size: letter; margin: 0; }
+    html, body {
+      width: 8.5in; height: 11in;
+      overflow: hidden !important; background: #fff !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .app-header, .settings-panel, .bottom-bar, .toast,
+    .modal-overlay, .placeholder-icon, .edit-badge,
+    .template-layer {
+      display: none !important;
+    }
+    .main-content { padding: 0 !important; }
+    .canvas-wrapper {
+      padding: 0 !important; margin: 0 !important;
+      overflow: hidden !important; display: block !important;
+    }
+    .paper {
+      box-shadow: none !important; border-radius: 0 !important;
+      margin: 0 !important; overflow: hidden !important;
+      page-break-after: avoid !important; break-after: avoid !important;
+    }
+    .img-cell {
+      outline: 1px dashed #ccc !important; outline-offset: -0.5px;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .img-cell img {
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+  }
+
+  @media (max-width: 500px) {
+    .app-header { padding: 12px 16px; }
+    .app-title { font-size: 17px; }
+    .canvas-wrapper { padding: 16px 8px; padding-bottom: 80px; }
+    .settings-panel.open { padding: 12px 16px; }
+    .btn { padding: 9px 12px; font-size: 12px; }
+    .modal { max-width: calc(100vw - 48px); }
+    .settings-row { gap: 6px; }
+    .field { min-width: 65px; }
+  }
+
+  .main-content { padding-bottom: 70px; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <div class="app-title">
+      Grid Cutter
+      <span>Hobonichi Weekly Sticker Printer</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" id="settingsToggle" title="Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <button class="btn btn-secondary" id="clearAllBtn">Clear All</button>
+    </div>
+  </div>
+</header>
+
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-inner">
+    <div class="settings-row">
+      <div class="field">
+        <label>Image Width</label>
+        <input type="number" id="cellWidth" value="20.64" step="0.1" min="1">
+      </div>
+      <div class="field">
+        <label>Image Height</label>
+        <input type="number" id="cellHeight" value="24.08" step="0.1" min="1">
+      </div>
+      <div class="field">
+        <label>Unit</label>
+        <select id="unitSelect">
+          <option value="mm" selected>mm</option>
+          <option value="cm">cm</option>
+          <option value="in">Inches</option>
+          <option value="px">Pixels</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="field field-wide">
+        <label>Anchor in Day Box</label>
+        <select id="anchorSelect">
+          <option value="top-left">Top Left</option>
+          <option value="top-center">Top Center</option>
+          <option value="top-right">Top Right</option>
+          <option value="center-left">Center Left</option>
+          <option value="center" selected>Center</option>
+          <option value="center-right">Center Right</option>
+          <option value="bottom-left">Bottom Left</option>
+          <option value="bottom-center">Bottom Center</option>
+          <option value="bottom-right">Bottom Right</option>
+        </select>
+      </div>
+      <div class="toggle-field">
+        <label>Overlay</label>
+        <div class="toggle-switch active" id="overlayToggle"></div>
+      </div>
+    </div>
+    <div class="grid-info" id="gridInfo"></div>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="canvas-wrapper" id="canvasWrapper">
+    <div class="paper" id="paper">
+      <div class="template-layer" id="templateLayer"></div>
+      <div class="image-layer" id="imageLayer"></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <div class="bottom-inner">
+    <div class="cell-count" id="cellCount">0 / 35 images placed</div>
+    <button class="btn btn-primary" id="printBtn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print
+    </button>
+  </div>
+</div>
+
+<!-- Cell Editor Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Edit Cell</div>
+      <div class="modal-cell-num" id="modalCellNum"></div>
+    </div>
+    <div class="modal-preview">
+      <div class="modal-preview-frame" id="modalPreviewFrame">
+        <img id="modalPreviewImg" src="" alt="Preview">
+      </div>
+    </div>
+    <div class="modal-fit-label" id="modalFitLabel"></div>
+    <div class="modal-actions">
+      <div class="modal-action-row">
+        <button class="modal-btn modal-btn-fit" id="modalFitBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          <span id="modalFitText">Switch to Fit</span>
+        </button>
+        <button class="modal-btn modal-btn-replace" id="modalReplaceBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+          Replace
+        </button>
+      </div>
+      <button class="modal-btn modal-btn-remove" id="modalRemoveBtn" style="width:100%">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        Remove Image
+      </button>
+    </div>
+    <div class="modal-confirm-row">
+      <button class="modal-btn-cancel" id="modalCancelBtn">Cancel</button>
+      <button class="modal-btn-accept" id="modalAcceptBtn">Accept</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="image/*">
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  // ── Hobonichi template constants (all in mm) ──
+  const GU = 3.44;
+  const DAY_W = 6 * GU;        // 20.64mm
+  const DAY_H = 8 * GU;        // 27.52mm
+  const HEADER_H = 2 * GU;     // 6.88mm
+  const DAY_NUM_H = 1 * GU;    // 3.44mm
+  const PAGE_GAP = 5;           // mm gap between left/right pages
+  const COLS_LEFT = 3;
+  const COLS_RIGHT = 4;
+  const TOTAL_COLS = 7;
+  const DAY_ROWS = 5;
+  const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  const TEMPLATE_W = COLS_LEFT * DAY_W + PAGE_GAP + COLS_RIGHT * DAY_W;
+  const TEMPLATE_H = HEADER_H + DAY_ROWS * DAY_H;
+
+  // Letter paper in mm
+  const PAPER_W = 215.9;
+  const PAPER_H = 279.4;
+
+  // ── State ──
+  let cellImages = {};  // key: "col-row" → { dataUrl, fit }
+  let showOverlay = true;
+
+  // Modal state
+  let editingKey = null;
+  let editingFit = null;
+  let editingDataUrl = null;
+  let originalFit = null;
+  let originalDataUrl = null;
+  let pendingReplace = false;
+  let activeKey = null;
+
+  // ── Elements ──
+  const $ = id => document.getElementById(id);
+  const paper = $('paper');
+  const templateLayer = $('templateLayer');
+  const imageLayer = $('imageLayer');
+  const canvasWrapper = $('canvasWrapper');
+  const cellWidthInput = $('cellWidth');
+  const cellHeightInput = $('cellHeight');
+  const unitSelect = $('unitSelect');
+  const anchorSelect = $('anchorSelect');
+  const overlayToggle = $('overlayToggle');
+  const gridInfo = $('gridInfo');
+  const fileInput = $('fileInput');
+  const cellCountEl = $('cellCount');
+  const toastEl = $('toast');
+  const modalOverlay = $('modalOverlay');
+  const modalPreviewFrame = $('modalPreviewFrame');
+  const modalPreviewImg = $('modalPreviewImg');
+  const modalFitLabel = $('modalFitLabel');
+  const modalFitBtn = $('modalFitBtn');
+  const modalFitText = $('modalFitText');
+  const modalCellNum = $('modalCellNum');
+
+  // ── Unit conversions (to/from mm) ──
+  function toMM(v, u) {
+    if (u === 'mm') return v;
+    if (u === 'cm') return v * 10;
+    if (u === 'in') return v * 25.4;
+    if (u === 'px') return v * 25.4 / 96;
+    return v;
+  }
+  function fromMM(v, u) {
+    if (u === 'mm') return v;
+    if (u === 'cm') return v / 10;
+    if (u === 'in') return v / 25.4;
+    if (u === 'px') return v * 96 / 25.4;
+    return v;
+  }
+
+  // ── Template geometry ──
+  function getColX(col) {
+    // Returns x offset in mm from template origin
+    if (col < COLS_LEFT) return col * DAY_W;
+    return COLS_LEFT * DAY_W + PAGE_GAP + (col - COLS_LEFT) * DAY_W;
+  }
+
+  function getDayRect(col, row) {
+    return {
+      x: getColX(col),
+      y: HEADER_H + row * DAY_H,
+      w: DAY_W,
+      h: DAY_H
+    };
+  }
+
+  // Template origin on paper (centered)
+  function getOrigin() {
+    return {
+      x: (PAPER_W - TEMPLATE_W) / 2,
+      y: (PAPER_H - TEMPLATE_H) / 2
+    };
+  }
+
+  // ── Get image cell size (clamped to day rect) ──
+  function getImgSize() {
+    const unit = unitSelect.value;
+    let w = toMM(parseFloat(cellWidthInput.value) || DAY_W, unit);
+    let h = toMM(parseFloat(cellHeightInput.value) || (DAY_H - DAY_NUM_H), unit);
+    w = Math.min(w, DAY_W);
+    h = Math.min(h, DAY_H);
+    return { w, h };
+  }
+
+  // ── Anchor position within day rect ──
+  function getAnchoredPos(dayRect, imgW, imgH) {
+    const anchor = anchorSelect.value;
+    let x, y;
+    const ax = anchor.includes('left') ? 0 : anchor.includes('right') ? 1 : 0.5;
+    const ay = anchor.includes('top') ? 0 : anchor.includes('bottom') ? 1 : 0.5;
+    x = dayRect.x + (dayRect.w - imgW) * ax;
+    y = dayRect.y + (dayRect.h - imgH) * ay;
+    return { x, y };
+  }
+
+  // ── Settings ──
+  $('settingsToggle').addEventListener('click', () => $('settingsPanel').classList.toggle('open'));
+
+  overlayToggle.addEventListener('click', () => {
+    showOverlay = !showOverlay;
+    overlayToggle.classList.toggle('active', showOverlay);
+    templateLayer.style.display = showOverlay ? '' : 'none';
+  });
+
+  let toastTimeout;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2000);
+  }
+
+  // ── Render ──
+  function render() {
+    const wrapperW = canvasWrapper.clientWidth - 16;
+    const paperRealWpx = PAPER_W * 96 / 25.4;
+    const scale = Math.min(1, wrapperW / paperRealWpx);
+
+    // mm → screen px
+    const s = v => v * 96 / 25.4 * scale;
+
+    paper.style.width = s(PAPER_W) + 'px';
+    paper.style.height = s(PAPER_H) + 'px';
+
+    const origin = getOrigin();
+    const imgSize = getImgSize();
+
+    // ── Template overlay ──
+    templateLayer.innerHTML = '';
+    templateLayer.style.display = showOverlay ? '' : 'none';
+
+    if (showOverlay) {
+      // Page gap indicator
+      const gap = document.createElement('div');
+      gap.className = 'tpl-page-gap';
+      gap.style.left = s(origin.x + COLS_LEFT * DAY_W) + 'px';
+      gap.style.top = s(origin.y) + 'px';
+      gap.style.width = s(PAGE_GAP) + 'px';
+      gap.style.height = s(TEMPLATE_H) + 'px';
+      templateLayer.appendChild(gap);
+
+      // Headers
+      for (let c = 0; c < TOTAL_COLS; c++) {
+        const hdr = document.createElement('div');
+        hdr.className = 'tpl-header';
+        hdr.textContent = DAYS[c];
+        hdr.style.left = s(origin.x + getColX(c)) + 'px';
+        hdr.style.top = s(origin.y) + 'px';
+        hdr.style.width = s(DAY_W) + 'px';
+        hdr.style.height = s(HEADER_H) + 'px';
+        hdr.style.fontSize = Math.max(8, s(GU * 0.9)) + 'px';
+        templateLayer.appendChild(hdr);
+      }
+
+      // Day rectangles
+      for (let r = 0; r < DAY_ROWS; r++) {
+        for (let c = 0; c < TOTAL_COLS; c++) {
+          const dr = getDayRect(c, r);
+
+          // Full day rect
+          const rect = document.createElement('div');
+          rect.className = 'tpl-day-rect';
+          rect.style.left = s(origin.x + dr.x) + 'px';
+          rect.style.top = s(origin.y + dr.y) + 'px';
+          rect.style.width = s(dr.w) + 'px';
+          rect.style.height = s(dr.h) + 'px';
+          templateLayer.appendChild(rect);
+
+          // Day number row
+          const numRow = document.createElement('div');
+          numRow.className = 'tpl-day-num-row';
+          numRow.style.left = s(origin.x + dr.x) + 'px';
+          numRow.style.top = s(origin.y + dr.y) + 'px';
+          numRow.style.width = s(dr.w) + 'px';
+          numRow.style.height = s(DAY_NUM_H) + 'px';
+          templateLayer.appendChild(numRow);
+        }
+      }
+    }
+
+    // ── Image cells ──
+    imageLayer.innerHTML = '';
+
+    for (let r = 0; r < DAY_ROWS; r++) {
+      for (let c = 0; c < TOTAL_COLS; c++) {
+        const key = c + '-' + r;
+        const dr = getDayRect(c, r);
+        const pos = getAnchoredPos(dr, imgSize.w, imgSize.h);
+
+        const cell = document.createElement('div');
+        cell.className = 'img-cell';
+        cell.style.left = s(origin.x + pos.x) + 'px';
+        cell.style.top = s(origin.y + pos.y) + 'px';
+        cell.style.width = s(imgSize.w) + 'px';
+        cell.style.height = s(imgSize.h) + 'px';
+
+        // Placeholder
+        const ph = document.createElement('div');
+        ph.className = 'placeholder-icon';
+        ph.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
+        cell.appendChild(ph);
+
+        // Edit badge
+        const badge = document.createElement('div');
+        badge.className = 'edit-badge';
+        badge.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+        cell.appendChild(badge);
+
+        // Image
+        if (cellImages[key]) {
+          const img = document.createElement('img');
+          img.src = cellImages[key].dataUrl;
+          img.style.objectFit = cellImages[key].fit || 'cover';
+          img.draggable = false;
+          cell.appendChild(img);
+          cell.classList.add('has-image');
+        }
+
+        // Click
+        cell.addEventListener('click', () => {
+          if (cellImages[key]) {
+            openModal(key, c, r);
+          } else {
+            activeKey = key;
+            pendingReplace = false;
+            fileInput.click();
+          }
+        });
+
+        imageLayer.appendChild(cell);
+      }
+    }
+
+    // Info
+    const unit = unitSelect.value;
+    const dW = fromMM(imgSize.w, unit);
+    const dH = fromMM(imgSize.h, unit);
+    const dec = unit === 'px' ? 0 : unit === 'mm' ? 1 : 2;
+    const uL = unit === 'in' ? '"' : unit;
+    gridInfo.innerHTML =
+      `Image: <strong>${dW.toFixed(dec)}${uL} × ${dH.toFixed(dec)}${uL}</strong> · ` +
+      `Day box: <strong>${DAY_W.toFixed(1)}mm × ${DAY_H.toFixed(1)}mm</strong> · ` +
+      `35 cells (7 × 5)`;
+
+    updateCount();
+  }
+
+  function updateCount() {
+    const c = Object.keys(cellImages).length;
+    cellCountEl.innerHTML = `<strong>${c}</strong> / 35 images placed`;
+  }
+
+  // ── Modal ──
+  function openModal(key, col, row) {
+    editingKey = key;
+    const data = cellImages[key];
+    if (!data) return;
+
+    editingFit = data.fit || 'cover';
+    editingDataUrl = data.dataUrl;
+    originalFit = editingFit;
+    originalDataUrl = editingDataUrl;
+
+    modalCellNum.textContent = `${DAYS[col]}, Row ${row + 1}`;
+
+    const imgSize = getImgSize();
+    const aspect = imgSize.w / imgSize.h;
+    const maxW = 260, maxH = 240;
+    let fw, fh;
+    if (aspect >= 1) {
+      fw = maxW; fh = maxW / aspect;
+      if (fh > maxH) { fh = maxH; fw = maxH * aspect; }
+    } else {
+      fh = maxH; fw = maxH * aspect;
+      if (fw > maxW) { fw = maxW; fh = maxW / aspect; }
+    }
+    modalPreviewFrame.style.width = fw + 'px';
+    modalPreviewFrame.style.height = fh + 'px';
+
+    refreshModalPreview();
+    modalOverlay.classList.add('open');
+  }
+
+  function refreshModalPreview() {
+    modalPreviewImg.src = editingDataUrl;
+    modalPreviewImg.style.objectFit = editingFit;
+    const isCover = editingFit === 'cover';
+    modalFitLabel.textContent = isCover ? 'Fill — image cropped to fill cell' : 'Fit — full image visible';
+    modalFitText.textContent = isCover ? 'Switch to Fit' : 'Switch to Fill';
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove('open');
+    editingKey = null;
+  }
+
+  modalFitBtn.addEventListener('click', () => {
+    editingFit = editingFit === 'cover' ? 'contain' : 'cover';
+    refreshModalPreview();
+  });
+
+  $('modalReplaceBtn').addEventListener('click', () => {
+    pendingReplace = true;
+    activeKey = editingKey;
+    fileInput.click();
+  });
+
+  $('modalRemoveBtn').addEventListener('click', () => {
+    if (editingKey !== null) {
+      delete cellImages[editingKey];
+      closeModal(); render();
+      showToast('Image removed');
+    }
+  });
+
+  $('modalCancelBtn').addEventListener('click', () => {
+    if (editingKey && cellImages[editingKey]) {
+      cellImages[editingKey].fit = originalFit;
+      cellImages[editingKey].dataUrl = originalDataUrl;
+    }
+    closeModal();
+  });
+
+  $('modalAcceptBtn').addEventListener('click', () => {
+    if (editingKey && cellImages[editingKey]) {
+      cellImages[editingKey].fit = editingFit;
+      cellImages[editingKey].dataUrl = editingDataUrl;
+      render();
+      showToast('Changes saved');
+    }
+    closeModal();
+  });
+
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) $('modalCancelBtn').click();
+  });
+
+  // ── File input ──
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file || activeKey === null) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const url = ev.target.result;
+      if (pendingReplace && editingKey !== null) {
+        editingDataUrl = url;
+        cellImages[activeKey] = { dataUrl: url, fit: editingFit };
+        refreshModalPreview();
+        pendingReplace = false;
+      } else {
+        cellImages[activeKey] = { dataUrl: url, fit: 'cover' };
+        render();
+        showToast('Image added');
+      }
+    };
+    reader.readAsDataURL(file);
+    fileInput.value = '';
+  });
+
+  // ── Clear all ──
+  $('clearAllBtn').addEventListener('click', () => {
+    if (!Object.keys(cellImages).length) return;
+    if (confirm('Remove all images from the grid?')) {
+      cellImages = {}; render();
+      showToast('All images cleared');
+    }
+  });
+
+  // ── Print ──
+  $('printBtn').addEventListener('click', () => {
+    const origin = getOrigin();
+    const imgSize = getImgSize();
+
+    // Set paper to exact print size in mm
+    paper.style.width = PAPER_W + 'mm';
+    paper.style.height = PAPER_H + 'mm';
+    paper.style.maxHeight = PAPER_H + 'mm';
+    paper.style.overflow = 'hidden';
+
+    // Reposition all image cells in mm for exact print
+    const cells = imageLayer.querySelectorAll('.img-cell');
+    let idx = 0;
+    for (let r = 0; r < DAY_ROWS; r++) {
+      for (let c = 0; c < TOTAL_COLS; c++) {
+        const dr = getDayRect(c, r);
+        const pos = getAnchoredPos(dr, imgSize.w, imgSize.h);
+        const cell = cells[idx++];
+        cell.style.left = (origin.x + pos.x) + 'mm';
+        cell.style.top = (origin.y + pos.y) + 'mm';
+        cell.style.width = imgSize.w + 'mm';
+        cell.style.height = imgSize.h + 'mm';
+      }
+    }
+
+    window.print();
+    setTimeout(render, 300);
+  });
+
+  // ── Settings inputs ──
+  let rebuildTimer;
+  const scheduleRender = () => { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(render, 200); };
+
+  cellWidthInput.addEventListener('input', scheduleRender);
+  cellHeightInput.addEventListener('input', scheduleRender);
+  anchorSelect.addEventListener('change', render);
+
+  unitSelect.addEventListener('change', () => {
+    const old = unitSelect.dataset.prevUnit || 'mm';
+    const nu = unitSelect.value;
+
+    const wMM = toMM(parseFloat(cellWidthInput.value) || DAY_W, old);
+    const hMM = toMM(parseFloat(cellHeightInput.value) || (DAY_H - DAY_NUM_H), old);
+
+    const dec = nu === 'px' ? 0 : nu === 'mm' ? 1 : 2;
+    const step = nu === 'px' ? '1' : nu === 'mm' ? '0.1' : '0.05';
+
+    cellWidthInput.value = fromMM(wMM, nu).toFixed(dec);
+    cellHeightInput.value = fromMM(hMM, nu).toFixed(dec);
+    cellWidthInput.step = step;
+    cellHeightInput.step = step;
+
+    unitSelect.dataset.prevUnit = nu;
+    render();
+  });
+
+  let resizeTimer;
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 150); });
+
+  // ── Init ──
+  unitSelect.dataset.prevUnit = 'mm';
+  render();
+})();
+</script>
+</body>
+</html>
