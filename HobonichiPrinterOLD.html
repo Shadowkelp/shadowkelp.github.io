@@ -767,18 +767,14 @@
           size: letter;
           margin: 0;
         }
-        * {
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
         html,
         body {
-          width: 8.5in !important;
-          height: 11in !important;
-          margin: 0 !important;
-          padding: 0 !important;
+          width: 8.5in;
+          height: 11in;
           overflow: hidden !important;
           background: #fff !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         .app-header,
         .settings-panel,
@@ -793,50 +789,26 @@
         }
         .main-content {
           padding: 0 !important;
-          margin: 0 !important;
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 8.5in !important;
-          height: 11in !important;
         }
         .canvas-wrapper {
           padding: 0 !important;
           margin: 0 !important;
-          overflow: visible !important;
+          overflow: hidden !important;
           display: block !important;
-          width: 8.5in !important;
-          height: 11in !important;
-          position: relative !important;
         }
         .paper {
           box-shadow: none !important;
           border-radius: 0 !important;
           margin: 0 !important;
-          padding: 0 !important;
-          overflow: visible !important;
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          /* Force exact letter size in print — overrides any inline JS styles */
-          width: 8.5in !important;
-          height: 11in !important;
-          transform: none !important;
+          overflow: hidden !important;
           page-break-after: avoid !important;
           break-after: avoid !important;
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-        .image-layer {
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
         }
         .img-cell {
           outline: 1px dashed #ccc !important;
           outline-offset: -0.5px;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         .img-cell.outside-month {
           outline: 1px dashed #ddd !important;
@@ -844,6 +816,10 @@
         .img-cell.outside-month.has-image {
           outline: 1px dashed #ccc !important;
           opacity: 1 !important;
+        }
+        .img-cell img {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
       }
 
@@ -1708,26 +1684,18 @@
         });
 
         // ── Print ──
-        // Detect iOS for print workarounds
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-        function preparePrintLayout() {
+        $("printBtn").addEventListener("click", () => {
           const origin = getOrigin();
           const imgSize = getImgSize();
           const dayRows = getRequiredRows(calYear, calMonth);
 
-          // Use inches for print positioning (most reliable cross-browser)
-          const mmToIn = (mm) => mm / 25.4;
+          // Set paper to exact print size in mm
+          paper.style.width = PAPER_W + "mm";
+          paper.style.height = PAPER_H + "mm";
+          paper.style.maxHeight = PAPER_H + "mm";
+          paper.style.overflow = "hidden";
 
-          // Set paper to exact letter size in inches
-          paper.style.width = "8.5in";
-          paper.style.height = "11in";
-          paper.style.maxHeight = "11in";
-          paper.style.overflow = "visible";
-          paper.style.transform = "none";
-
-          // Reposition all image cells in inches for exact print
+          // Reposition all image cells in mm for exact print
           const cells = imageLayer.querySelectorAll(".img-cell");
           let idx = 0;
           for (let r = 0; r < dayRows; r++) {
@@ -1735,51 +1703,15 @@
               const dr = getDayRect(c, r);
               const pos = getAnchoredPos(dr, imgSize.w, imgSize.h);
               const cell = cells[idx++];
-              if (!cell) continue;
-              cell.style.left = mmToIn(origin.x + pos.x) + "in";
-              cell.style.top = mmToIn(origin.y + pos.y) + "in";
-              cell.style.width = mmToIn(imgSize.w) + "in";
-              cell.style.height = mmToIn(imgSize.h) + "in";
+              cell.style.left = origin.x + pos.x + "mm";
+              cell.style.top = origin.y + pos.y + "mm";
+              cell.style.width = imgSize.w + "mm";
+              cell.style.height = imgSize.h + "mm";
             }
           }
-        }
 
-        function restoreScreenLayout() {
-          render();
-        }
-
-        // Use beforeprint/afterprint events for reliable cleanup (works on iOS)
-        window.addEventListener("beforeprint", preparePrintLayout);
-        window.addEventListener("afterprint", restoreScreenLayout);
-
-        $("printBtn").addEventListener("click", () => {
-          // Show iOS users a tip about disabling headers/footers
-          if (isIOS) {
-            showToast("Tip: In print options, disable Headers & Footers");
-          }
-
-          // On iOS, beforeprint/afterprint events may not fire reliably,
-          // so we also prepare manually before calling print
-          preparePrintLayout();
           window.print();
-
-          // Fallback restore for browsers where afterprint doesn't fire (older iOS)
-          // Use both matchMedia listener and setTimeout as safety nets
-          if (isIOS) {
-            // iOS: the print dialog blocks, then resumes — use focus event as backup
-            const restoreOnce = () => {
-              window.removeEventListener("focus", restoreOnce);
-              clearTimeout(fallbackTimer);
-              // Small delay to let iOS finish the print flow
-              setTimeout(restoreScreenLayout, 100);
-            };
-            window.addEventListener("focus", restoreOnce);
-            // Ultimate fallback
-            const fallbackTimer = setTimeout(restoreScreenLayout, 3000);
-          } else {
-            // Desktop fallback (afterprint should handle it, but just in case)
-            setTimeout(restoreScreenLayout, 300);
-          }
+          setTimeout(render, 300);
         });
 
         // ── Settings inputs ──
