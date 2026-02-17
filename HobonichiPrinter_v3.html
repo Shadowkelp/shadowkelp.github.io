@@ -1024,10 +1024,6 @@
             <label>Fill Page</label>
             <div class="toggle-switch active" id="fillPageToggle"></div>
           </div>
-          <div class="toggle-field">
-            <label>Tight Cut</label>
-            <div class="toggle-switch" id="tightCutToggle"></div>
-          </div>
         </div>
         <div class="grid-info" id="gridInfo"></div>
       </div>
@@ -1224,7 +1220,6 @@
         let cellImages = {}; // key: "col-row" → { dataUrl, fit }
         let showOverlay = true;
         let fillPage = true;
-        let tightCut = false;
         let userZoom = 1; // 1 = fit-to-width, >1 zoomed in
         const ZOOM_MIN = 0.5;
         const ZOOM_MAX = 4;
@@ -1299,7 +1294,6 @@
         const anchorMarginInput = $("anchorMargin");
         const overlayToggle = $("overlayToggle");
         const fillPageToggle = $("fillPageToggle");
-        const tightCutToggle = $("tightCutToggle");
         const gridInfo = $("gridInfo");
         const fileInput = $("fileInput");
         const cellCountEl = $("cellCount");
@@ -1488,12 +1482,6 @@
           render();
         });
 
-        tightCutToggle.addEventListener("click", () => {
-          tightCut = !tightCut;
-          tightCutToggle.classList.toggle("active", tightCut);
-          render();
-        });
-
         let toastTimeout;
         function showToast(msg) {
           toastEl.textContent = msg;
@@ -1604,78 +1592,44 @@
 
           // Add separator lines between calendar and extra rows
           if (fillPage) {
-            const totalRows = endRow - startRow;
-            const tightGridW = TOTAL_COLS * imgSize.w;
-            const tightGridH = totalRows * imgSize.h;
-            const tightOriginForSep = {
-              x: (PAPER_W - tightGridW) / 2,
-              y: (PAPER_H - tightGridH) / 2,
-            };
-
-            const sepW = tightCut ? tightGridW : TEMPLATE_W;
-            const sepX = tightCut ? tightOriginForSep.x : origin.x;
-
+            const templateW = TEMPLATE_W;
             // Separator above calendar (between extra rows above and the header)
             if (startRow < 0) {
               const sepAbove = document.createElement("div");
               sepAbove.className = "extra-row-separator";
-              const sepY = tightCut
-                ? tightOriginForSep.y + (0 - startRow) * imgSize.h
-                : origin.y;
-              sepAbove.style.left = s(sepX) + "px";
+              const sepY = origin.y; // top of header area
+              sepAbove.style.left = s(origin.x) + "px";
               sepAbove.style.top = s(sepY) + "px";
-              sepAbove.style.width = s(sepW) + "px";
+              sepAbove.style.width = s(templateW) + "px";
               imageLayer.appendChild(sepAbove);
             }
             // Separator below calendar (between last calendar row and extra rows)
             if (endRow > dayRows) {
               const sepBelow = document.createElement("div");
               sepBelow.className = "extra-row-separator";
-              const sepY = tightCut
-                ? tightOriginForSep.y + (dayRows - startRow) * imgSize.h
-                : origin.y + HEADER_H + dayRows * DAY_H;
-              sepBelow.style.left = s(sepX) + "px";
+              const sepY = origin.y + HEADER_H + dayRows * DAY_H;
+              sepBelow.style.left = s(origin.x) + "px";
               sepBelow.style.top = s(sepY) + "px";
-              sepBelow.style.width = s(sepW) + "px";
+              sepBelow.style.width = s(templateW) + "px";
               imageLayer.appendChild(sepBelow);
             }
           }
-
-          // ── Tight-cut grid origin (images edge-to-edge, centered on paper) ──
-          const totalRows = endRow - startRow;
-          const tightGridW = TOTAL_COLS * imgSize.w;
-          const tightGridH = totalRows * imgSize.h;
-          const tightOrigin = {
-            x: (PAPER_W - tightGridW) / 2,
-            y: (PAPER_H - tightGridH) / 2,
-          };
 
           for (let r = startRow; r < endRow; r++) {
             const isExtraRow = r < 0 || r >= dayRows;
             for (let c = 0; c < TOTAL_COLS; c++) {
               const key = c + "-" + r;
+              const dr = getCellRect(c, r);
+              const pos = getAnchoredPos(dr, imgSize.w, imgSize.h);
               const isOutside = !isExtraRow && calGridForCells[key] === undefined;
-
-              let cellX, cellY;
-              if (tightCut) {
-                // Tight grid: images edge-to-edge, no gaps
-                cellX = tightOrigin.x + c * imgSize.w;
-                cellY = tightOrigin.y + (r - startRow) * imgSize.h;
-              } else {
-                // Normal: anchored within day boxes
-                const dr = getCellRect(c, r);
-                const pos = getAnchoredPos(dr, imgSize.w, imgSize.h);
-                cellX = origin.x + pos.x;
-                cellY = origin.y + pos.y;
-              }
 
               const cell = document.createElement("div");
               let cls = "img-cell";
               if (isExtraRow) cls += " extra-row";
               else if (isOutside) cls += " outside-month";
               cell.className = cls;
-              cell.style.left = s(cellX) + "px";
-              cell.style.top = s(cellY) + "px";
+              cell.style.left = s(origin.x + pos.x) + "px";
+              cell.style.top = s(origin.y + pos.y) + "px";
               cell.style.width = s(imgSize.w) + "px";
               cell.style.height = s(imgSize.h) + "px";
 
@@ -1919,30 +1873,14 @@
           // Reposition all image cells in inches for exact print
           const cells = imageLayer.querySelectorAll(".img-cell");
           let idx = 0;
-          const pTotalRows = endRow - startRow;
-          const pTightGridW = TOTAL_COLS * imgSize.w;
-          const pTightGridH = pTotalRows * imgSize.h;
-          const pTightOrigin = {
-            x: (PAPER_W - pTightGridW) / 2,
-            y: (PAPER_H - pTightGridH) / 2,
-          };
-
           for (let r = startRow; r < endRow; r++) {
             for (let c = 0; c < TOTAL_COLS; c++) {
-              let cellX, cellY;
-              if (tightCut) {
-                cellX = pTightOrigin.x + c * imgSize.w;
-                cellY = pTightOrigin.y + (r - startRow) * imgSize.h;
-              } else {
-                const dr = getCellRect(c, r);
-                const pos = getAnchoredPos(dr, imgSize.w, imgSize.h);
-                cellX = origin.x + pos.x;
-                cellY = origin.y + pos.y;
-              }
+              const dr = getCellRect(c, r);
+              const pos = getAnchoredPos(dr, imgSize.w, imgSize.h);
               const cell = cells[idx++];
               if (!cell) continue;
-              cell.style.left = mmToIn(cellX) + "in";
-              cell.style.top = mmToIn(cellY) + "in";
+              cell.style.left = mmToIn(origin.x + pos.x) + "in";
+              cell.style.top = mmToIn(origin.y + pos.y) + "in";
               cell.style.width = mmToIn(imgSize.w) + "in";
               cell.style.height = mmToIn(imgSize.h) + "in";
             }
