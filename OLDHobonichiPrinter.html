@@ -346,23 +346,6 @@
         opacity: 0.25;
       }
 
-      /* Extra rows (fill page) */
-      .img-cell.extra-row {
-        outline-color: #d4c9be;
-        outline-style: dotted;
-      }
-      .img-cell.extra-row:hover {
-        background: #f9f5f0;
-      }
-      .extra-row-separator {
-        position: absolute;
-        height: 0;
-        border-top: 1.5px dashed var(--accent);
-        opacity: 0.35;
-        pointer-events: none;
-        z-index: 3;
-      }
-
       /* ── Canvas ── */
       .canvas-wrapper {
         padding: 20px;
@@ -805,8 +788,7 @@
         .placeholder-icon,
         .edit-badge,
         .template-layer,
-        .zoom-controls,
-        .extra-row-separator {
+        .zoom-controls {
           display: none !important;
         }
         .main-content {
@@ -1021,10 +1003,6 @@
             <label>Overlay</label>
             <div class="toggle-switch active" id="overlayToggle"></div>
           </div>
-          <div class="toggle-field">
-            <label>Fill Page</label>
-            <div class="toggle-switch active" id="fillPageToggle"></div>
-          </div>
         </div>
         <div class="grid-info" id="gridInfo"></div>
       </div>
@@ -1220,7 +1198,6 @@
         // ── State ──
         let cellImages = {}; // key: "col-row" → { dataUrl, fit }
         let showOverlay = true;
-        let fillPage = true;
         let userZoom = 1; // 1 = fit-to-width, >1 zoomed in
         const ZOOM_MIN = 0.5;
         const ZOOM_MAX = 4;
@@ -1229,35 +1206,6 @@
         // Calendar state
         let calYear = 2026;
         let calMonth = 0; // 0-indexed (0 = January)
-
-        // ── Persistence (prevents mobile browsers from losing images during print) ──
-        const STORAGE_KEY = "hobonichi_cellImages";
-        const STORAGE_META_KEY = "hobonichi_meta";
-
-        function saveCellImages() {
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(cellImages));
-            localStorage.setItem(STORAGE_META_KEY, JSON.stringify({ year: calYear, month: calMonth }));
-          } catch (e) {
-            // localStorage full or unavailable — fail silently
-          }
-        }
-
-        function loadCellImages() {
-          try {
-            const meta = JSON.parse(localStorage.getItem(STORAGE_META_KEY));
-            const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
-            if (meta && data && typeof data === "object") {
-              calYear = meta.year || calYear;
-              calMonth = meta.month ?? calMonth;
-              cellImages = data;
-            }
-          } catch (e) {
-            // corrupt or missing — start fresh
-          }
-        }
-
-        loadCellImages();
         const MONTH_NAMES = [
           "January",
           "February",
@@ -1294,7 +1242,6 @@
         const anchorSelect = $("anchorSelect");
         const anchorMarginInput = $("anchorMargin");
         const overlayToggle = $("overlayToggle");
-        const fillPageToggle = $("fillPageToggle");
         const gridInfo = $("gridInfo");
         const fileInput = $("fileInput");
         const cellCountEl = $("cellCount");
@@ -1384,39 +1331,6 @@
           return { x, y };
         }
 
-        // ── Calculate row bounds for fill-page mode ──
-        // Extra rows above stack upward from header top (y = row * DAY_H, row < 0)
-        // Extra rows below use normal formula (y = HEADER_H + row * DAY_H)
-        const PAGE_MARGIN = 3; // mm from paper edge
-        function getRowBounds() {
-          const dayRows = getRequiredRows(calYear, calMonth);
-          if (!fillPage) return { startRow: 0, endRow: dayRows };
-
-          const origin = getOrigin();
-
-          // Extra rows above: positioned at origin.y + row*DAY_H (row is negative)
-          // Need origin.y + row*DAY_H >= PAGE_MARGIN
-          const minRow = Math.ceil((PAGE_MARGIN - origin.y) / DAY_H);
-
-          // Extra rows below: positioned at origin.y + HEADER_H + row*DAY_H
-          // Need origin.y + HEADER_H + row*DAY_H + DAY_H <= PAPER_H - PAGE_MARGIN
-          const maxRow = Math.floor((PAPER_H - PAGE_MARGIN - origin.y - HEADER_H - DAY_H) / DAY_H);
-
-          return { startRow: Math.min(minRow, 0), endRow: Math.max(maxRow + 1, dayRows) };
-        }
-
-        // Get cell rect — extra rows above use different Y formula to avoid header overlap
-        function getCellRect(col, row) {
-          const dayRows = getRequiredRows(calYear, calMonth);
-          const x = getColX(col);
-          if (row < 0) {
-            // Stack upward from top of header (y=0 relative to template)
-            return { x, y: row * DAY_H, w: DAY_W, h: DAY_H };
-          }
-          // Normal and below-calendar rows
-          return { x, y: HEADER_H + row * DAY_H, w: DAY_W, h: DAY_H };
-        }
-
         // ── Calendar grid: returns a 7×5 array [col][row] → dayNumber or null ──
         function getCalendarGrid(year, month) {
           const grid = {};
@@ -1450,7 +1364,6 @@
             calMonth = 11;
             calYear--;
           }
-          saveCellImages();
           updateMonthLabel();
           render();
         });
@@ -1461,7 +1374,6 @@
             calMonth = 0;
             calYear++;
           }
-          saveCellImages();
           updateMonthLabel();
           render();
         });
@@ -1475,12 +1387,6 @@
           showOverlay = !showOverlay;
           overlayToggle.classList.toggle("active", showOverlay);
           templateLayer.style.display = showOverlay ? "" : "none";
-        });
-
-        fillPageToggle.addEventListener("click", () => {
-          fillPage = !fillPage;
-          fillPageToggle.classList.toggle("active", fillPage);
-          render();
         });
 
         let toastTimeout;
@@ -1589,46 +1495,16 @@
           // ── Image cells ──
           imageLayer.innerHTML = "";
           const calGridForCells = getCalendarGrid(calYear, calMonth);
-          const { startRow, endRow } = getRowBounds();
 
-          // Add separator lines between calendar and extra rows
-          if (fillPage) {
-            const templateW = TEMPLATE_W;
-            // Separator above calendar (between extra rows above and the header)
-            if (startRow < 0) {
-              const sepAbove = document.createElement("div");
-              sepAbove.className = "extra-row-separator";
-              const sepY = origin.y; // top of header area
-              sepAbove.style.left = s(origin.x) + "px";
-              sepAbove.style.top = s(sepY) + "px";
-              sepAbove.style.width = s(templateW) + "px";
-              imageLayer.appendChild(sepAbove);
-            }
-            // Separator below calendar (between last calendar row and extra rows)
-            if (endRow > dayRows) {
-              const sepBelow = document.createElement("div");
-              sepBelow.className = "extra-row-separator";
-              const sepY = origin.y + HEADER_H + dayRows * DAY_H;
-              sepBelow.style.left = s(origin.x) + "px";
-              sepBelow.style.top = s(sepY) + "px";
-              sepBelow.style.width = s(templateW) + "px";
-              imageLayer.appendChild(sepBelow);
-            }
-          }
-
-          for (let r = startRow; r < endRow; r++) {
-            const isExtraRow = r < 0 || r >= dayRows;
+          for (let r = 0; r < dayRows; r++) {
             for (let c = 0; c < TOTAL_COLS; c++) {
               const key = c + "-" + r;
-              const dr = getCellRect(c, r);
+              const dr = getDayRect(c, r);
               const pos = getAnchoredPos(dr, imgSize.w, imgSize.h);
-              const isOutside = !isExtraRow && calGridForCells[key] === undefined;
+              const isOutside = calGridForCells[key] === undefined;
 
               const cell = document.createElement("div");
-              let cls = "img-cell";
-              if (isExtraRow) cls += " extra-row";
-              else if (isOutside) cls += " outside-month";
-              cell.className = cls;
+              cell.className = "img-cell" + (isOutside ? " outside-month" : "");
               cell.style.left = s(origin.x + pos.x) + "px";
               cell.style.top = s(origin.y + pos.y) + "px";
               cell.style.width = s(imgSize.w) + "px";
@@ -1680,13 +1556,10 @@
           const dec = unit === "px" ? 0 : unit === "mm" ? 1 : 2;
           const uL = unit === "in" ? '"' : unit;
           const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-          const totalCells = (endRow - startRow) * TOTAL_COLS;
-          const extraCells = totalCells - dayRows * TOTAL_COLS;
           gridInfo.innerHTML =
             `Image: <strong>${dW.toFixed(dec)}${uL} × ${dH.toFixed(dec)}${uL}</strong> · ` +
             `Day box: <strong>${DAY_W.toFixed(1)}mm × ${DAY_H.toFixed(1)}mm</strong> · ` +
-            `${daysInMonth} days` +
-            (fillPage && extraCells > 0 ? ` · <strong>+${extraCells} bonus cells</strong>` : "");
+            `${daysInMonth} days`;
 
           updateCount();
           updateZoomDisplay();
@@ -1695,14 +1568,8 @@
         function updateCount() {
           const calGrid = getCalendarGrid(calYear, calMonth);
           const totalDays = Object.keys(calGrid).length;
-          const { startRow, endRow } = getRowBounds();
-          const dayRows = getRequiredRows(calYear, calMonth);
-          const totalCells = (endRow - startRow) * TOTAL_COLS;
           const c = Object.keys(cellImages).length;
-          const label = fillPage
-            ? `<strong>${c}</strong> image${c !== 1 ? "s" : ""} placed · ${totalCells} cells (${totalDays} days + ${totalCells - dayRows * TOTAL_COLS} bonus)`
-            : `<strong>${c}</strong> image${c !== 1 ? "s" : ""} placed · ${totalDays} days`;
-          cellCountEl.innerHTML = label;
+          cellCountEl.innerHTML = `<strong>${c}</strong> image${c !== 1 ? "s" : ""} placed · ${totalDays} days`;
         }
 
         // ── Modal ──
@@ -1718,15 +1585,9 @@
 
           const calGrid = getCalendarGrid(calYear, calMonth);
           const dayNum = calGrid[key];
-          const dayRows = getRequiredRows(calYear, calMonth);
-          const isExtra = row < 0 || row >= dayRows;
-          if (dayNum) {
-            modalCellNum.textContent = `${DAYS[col]} ${dayNum}`;
-          } else if (isExtra) {
-            modalCellNum.textContent = `${DAYS[col]} · Bonus`;
-          } else {
-            modalCellNum.textContent = `${DAYS[col]}, Row ${row + 1}`;
-          }
+          modalCellNum.textContent = dayNum
+            ? `${DAYS[col]} ${dayNum}`
+            : `${DAYS[col]}, Row ${row + 1}`;
 
           const imgSize = getImgSize();
           const aspect = imgSize.w / imgSize.h;
@@ -1786,7 +1647,6 @@
         $("modalRemoveBtn").addEventListener("click", () => {
           if (editingKey !== null) {
             delete cellImages[editingKey];
-            saveCellImages();
             closeModal();
             render();
             showToast("Image removed");
@@ -1805,7 +1665,6 @@
           if (editingKey && cellImages[editingKey]) {
             cellImages[editingKey].fit = editingFit;
             cellImages[editingKey].dataUrl = editingDataUrl;
-            saveCellImages();
             render();
             showToast("Changes saved");
           }
@@ -1826,12 +1685,10 @@
             if (pendingReplace && editingKey !== null) {
               editingDataUrl = url;
               cellImages[activeKey] = { dataUrl: url, fit: editingFit };
-              saveCellImages();
               refreshModalPreview();
               pendingReplace = false;
             } else {
               cellImages[activeKey] = { dataUrl: url, fit: "cover" };
-              saveCellImages();
               render();
               showToast("Image added");
             }
@@ -1845,7 +1702,6 @@
           if (!Object.keys(cellImages).length) return;
           if (confirm("Remove all images from the grid?")) {
             cellImages = {};
-            saveCellImages();
             render();
             showToast("All images cleared");
           }
@@ -1859,7 +1715,7 @@
         function preparePrintLayout() {
           const origin = getOrigin();
           const imgSize = getImgSize();
-          const { startRow, endRow } = getRowBounds();
+          const dayRows = getRequiredRows(calYear, calMonth);
 
           // Use inches for print positioning (most reliable cross-browser)
           const mmToIn = (mm) => mm / 25.4;
@@ -1874,9 +1730,9 @@
           // Reposition all image cells in inches for exact print
           const cells = imageLayer.querySelectorAll(".img-cell");
           let idx = 0;
-          for (let r = startRow; r < endRow; r++) {
+          for (let r = 0; r < dayRows; r++) {
             for (let c = 0; c < TOTAL_COLS; c++) {
-              const dr = getCellRect(c, r);
+              const dr = getDayRect(c, r);
               const pos = getAnchoredPos(dr, imgSize.w, imgSize.h);
               const cell = cells[idx++];
               if (!cell) continue;
