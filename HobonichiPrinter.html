@@ -785,10 +785,6 @@
         color: var(--accent);
       }
 
-      #fileInput {
-        display: none;
-      }
-
       .toast {
         position: fixed;
         bottom: 80px;
@@ -1218,7 +1214,6 @@
       </div>
     </div>
 
-    <input type="file" id="fileInput" accept="image/*" multiple />
     <div class="toast" id="toast"></div>
 
     <script>
@@ -1365,7 +1360,6 @@
         const fillPageToggle = $("fillPageToggle");
         const tightCutToggle = $("tightCutToggle");
         const gridInfo = $("gridInfo");
-        const fileInput = $("fileInput");
         const cellCountEl = $("cellCount");
         const toastEl = $("toast");
         const modalOverlay = $("modalOverlay");
@@ -1813,8 +1807,7 @@
                 } else {
                   activeKey = key;
                   pendingReplace = false;
-                  fileInput.setAttribute("multiple", "");
-                  fileInput.click();
+                  triggerFilePicker(true);
                 }
               }
 
@@ -1943,8 +1936,7 @@
         $("modalReplaceBtn").addEventListener("click", () => {
           pendingReplace = true;
           activeKey = editingKey;
-          fileInput.removeAttribute("multiple");
-          fileInput.click();
+          triggerFilePicker(false);
         });
 
         $("modalRemoveBtn").addEventListener("click", () => {
@@ -2103,64 +2095,86 @@
           if (isDragging) e.preventDefault();
         }, { passive: false });
 
-        // ── File input (multi-file support) ──
-        fileInput.addEventListener("change", (e) => {
-          const files = Array.from(e.target.files);
-          if (!files.length) return;
+        // ── File picker (creates fresh <input> each time for iOS Photo Library multi-select) ──
+        function triggerFilePicker(allowMultiple) {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = "image/*";
+          if (allowMultiple) input.multiple = true;
+          input.style.display = "none";
+          document.body.appendChild(input);
 
-          if (pendingReplace && editingKey !== null) {
-            // Replace mode — single file only
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-              const url = ev.target.result;
-              editingDataUrl = url;
-              cellImages[activeKey] = { dataUrl: url, fit: editingFit };
-              saveCellImages();
-              refreshModalPreview();
-              pendingReplace = false;
-            };
-            reader.readAsDataURL(files[0]);
-          } else if (files.length === 1) {
-            // Single file — place in the clicked cell
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-              cellImages[activeKey] = { dataUrl: ev.target.result, fit: "cover" };
-              saveCellImages();
-              render();
-              showToast("Image added");
-            };
-            reader.readAsDataURL(files[0]);
-          } else {
-            // Multi-file — auto-place in empty cells starting from clicked cell
-            const emptyKeys = getEmptyCellKeys(activeKey);
-            const filesToPlace = files.slice(0, emptyKeys.length);
-            let loaded = 0;
+          input.addEventListener("change", () => {
+            const files = Array.from(input.files);
+            document.body.removeChild(input);
+            if (!files.length) return;
 
-            filesToPlace.forEach((file, i) => {
+            if (pendingReplace && editingKey !== null) {
+              // Replace mode — single file only
               const reader = new FileReader();
               reader.onload = (ev) => {
-                cellImages[emptyKeys[i]] = { dataUrl: ev.target.result, fit: "cover" };
-                loaded++;
-                if (loaded === filesToPlace.length) {
-                  saveCellImages();
-                  render();
-                  const placed = filesToPlace.length;
-                  const skipped = files.length - placed;
-                  let msg = `${placed} image${placed !== 1 ? "s" : ""} added`;
-                  if (skipped > 0) msg += ` · ${skipped} skipped (no space)`;
-                  showToast(msg);
-                }
+                const url = ev.target.result;
+                editingDataUrl = url;
+                cellImages[activeKey] = { dataUrl: url, fit: editingFit };
+                saveCellImages();
+                refreshModalPreview();
+                pendingReplace = false;
               };
-              reader.readAsDataURL(file);
-            });
+              reader.readAsDataURL(files[0]);
+            } else if (files.length === 1) {
+              // Single file — place in the clicked cell
+              const reader = new FileReader();
+              reader.onload = (ev) => {
+                cellImages[activeKey] = { dataUrl: ev.target.result, fit: "cover" };
+                saveCellImages();
+                render();
+                showToast("Image added");
+              };
+              reader.readAsDataURL(files[0]);
+            } else {
+              // Multi-file — auto-place in empty cells starting from clicked cell
+              const emptyKeys = getEmptyCellKeys(activeKey);
+              const filesToPlace = files.slice(0, emptyKeys.length);
+              let loaded = 0;
 
-            if (filesToPlace.length === 0) {
-              showToast("No empty cells available");
+              filesToPlace.forEach((file, i) => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  cellImages[emptyKeys[i]] = { dataUrl: ev.target.result, fit: "cover" };
+                  loaded++;
+                  if (loaded === filesToPlace.length) {
+                    saveCellImages();
+                    render();
+                    const placed = filesToPlace.length;
+                    const skipped = files.length - placed;
+                    let msg = `${placed} image${placed !== 1 ? "s" : ""} added`;
+                    if (skipped > 0) msg += ` · ${skipped} skipped (no space)`;
+                    showToast(msg);
+                  }
+                };
+                reader.readAsDataURL(file);
+              });
+
+              if (filesToPlace.length === 0) {
+                showToast("No empty cells available");
+              }
             }
-          }
+          });
 
-          fileInput.value = "";
-        });
+          // Clean up if user cancels the picker
+          // (focus returns to window without change event on most browsers)
+          const cleanup = () => {
+            setTimeout(() => {
+              if (document.body.contains(input)) {
+                document.body.removeChild(input);
+              }
+            }, 500);
+            window.removeEventListener("focus", cleanup);
+          };
+          window.addEventListener("focus", cleanup);
+
+          input.click();
+        }
 
         // ── Clear all ──
         $("clearAllBtn").addEventListener("click", () => {
