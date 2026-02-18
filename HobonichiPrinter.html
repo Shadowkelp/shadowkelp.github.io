@@ -442,6 +442,7 @@
         touch-action: auto;
         -webkit-user-select: none;
         user-select: none;
+        -webkit-touch-callout: none;
       }
       .img-cell:hover {
         background: var(--cell-hover);
@@ -519,6 +520,9 @@
         height: 100%;
         object-fit: cover;
         display: block;
+        pointer-events: none;
+        -webkit-touch-callout: none;
+        -webkit-user-drag: none;
       }
 
       /* ── Zoom Controls ── */
@@ -1819,6 +1823,14 @@
               cell.addEventListener("pointermove", onPointerMove);
               cell.addEventListener("pointerup", onPointerUp);
               cell.addEventListener("pointercancel", onPointerCancel);
+
+              // iOS: prevent native image long-press callout/drag preview
+              // This must be on touchstart with passive:false to intercept before iOS acts
+              cell.addEventListener("touchstart", (e) => {
+                if (cellImages[key] && e.touches.length === 1) {
+                  e.preventDefault();
+                }
+              }, { passive: false });
 
               // Prevent context menu on long-press (mobile)
               cell.addEventListener("contextmenu", (e) => {
