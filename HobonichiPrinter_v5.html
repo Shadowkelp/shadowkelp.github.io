@@ -124,68 +124,6 @@
         background: var(--border-light);
       }
 
-      .btn-preset {
-        background: var(--surface);
-        color: var(--accent);
-        border: 1.5px dashed var(--accent);
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.2px;
-        padding: 0;
-        border-radius: 3px;
-        width: 40px;
-        height: 54px;
-        display: inline-flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        line-height: 1.2;
-        position: relative;
-        gap: 0;
-      }
-      .btn-preset:hover {
-        background: var(--accent-light);
-        border-color: var(--accent-hover);
-        color: var(--accent-hover);
-      }
-      .btn-preset:active {
-        transform: scale(0.95);
-        background: var(--accent);
-        color: #fff;
-      }
-      .btn-preset.preset-active {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-        box-shadow: 0 1px 4px rgba(196, 112, 75, 0.35);
-      }
-      .btn-preset.preset-active:hover {
-        background: var(--accent-hover);
-        border-color: var(--accent-hover);
-        color: #fff;
-      }
-      .btn-preset-showday {
-        position: relative;
-      }
-      .btn-preset-showday::after {
-        content: "";
-        position: absolute;
-        top: 13%;
-        left: 3px;
-        right: 3px;
-        border-top: 1.5px dotted var(--accent);
-        pointer-events: none;
-      }
-      .btn-preset-showday:hover::after {
-        border-color: var(--accent-hover);
-      }
-      .btn-preset-showday:active::after {
-        border-color: #fff;
-      }
-      .btn-preset-showday.preset-active::after {
-        border-color: rgba(255,255,255,0.5);
-      }
-
       .btn-icon {
         width: 38px;
         height: 38px;
@@ -966,15 +904,6 @@
         .app-title {
           font-size: 17px;
         }
-        .header-actions {
-          flex-wrap: wrap;
-          justify-content: flex-end;
-        }
-        .btn-preset {
-          width: 36px;
-          height: 48px;
-          font-size: 9px;
-        }
         .canvas-wrapper {
           padding: 16px 8px;
           padding-bottom: 80px;
@@ -1063,8 +992,6 @@
               />
             </svg>
           </button>
-          <button class="btn btn-preset" id="fullSquareBtn" title="Set image to 20×27mm (full day box)">Full<br>Square</button>
-          <button class="btn btn-preset btn-preset-showday" id="showDayBtn" title="Set image to 20×23.5mm (day area only)">Show<br>Day</button>
           <button class="btn btn-secondary" id="clearAllBtn">Clear All</button>
         </div>
       </div>
@@ -1931,7 +1858,6 @@
 
           updateCount();
           updateZoomDisplay();
-          updatePresetActive();
         }
 
         function updateCount() {
@@ -2260,29 +2186,6 @@
           window.addEventListener("focus", cleanup);
 
           input.click();
-        }
-
-        // ── Preset size buttons ──
-        function applyPresetSize(wMM, hMM) {
-          const unit = unitSelect.value;
-          const dec = unit === "px" ? 0 : unit === "mm" ? 1 : 2;
-          cellWidthInput.value = fromMM(wMM, unit).toFixed(dec);
-          cellHeightInput.value = fromMM(hMM, unit).toFixed(dec);
-          render();
-        }
-
-        $("fullSquareBtn").addEventListener("click", () => applyPresetSize(20, 27));
-        $("showDayBtn").addEventListener("click", () => applyPresetSize(20, 23.5));
-
-        function updatePresetActive() {
-          const unit = unitSelect.value;
-          const wMM = toMM(parseFloat(cellWidthInput.value) || 0, unit);
-          const hMM = toMM(parseFloat(cellHeightInput.value) || 0, unit);
-          const eps = 0.05;
-          const isFullSquare = Math.abs(wMM - 20) < eps && Math.abs(hMM - 27) < eps;
-          const isShowDay = Math.abs(wMM - 20) < eps && Math.abs(hMM - 23.5) < eps;
-          $("fullSquareBtn").classList.toggle("preset-active", isFullSquare);
-          $("showDayBtn").classList.toggle("preset-active", isShowDay);
         }
 
         // ── Clear all ──

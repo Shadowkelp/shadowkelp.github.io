@@ -873,6 +873,72 @@
         transform: translateX(-50%) translateY(0);
       }
 
+      /* ── Loading overlay ── */
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(44, 36, 32, 0.45);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 300;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      .loading-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .loading-card {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 28px 36px;
+        box-shadow: 0 12px 40px rgba(44, 36, 32, 0.25);
+        text-align: center;
+        min-width: 220px;
+      }
+      .loading-spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid var(--border-light);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin: 0 auto 14px;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .loading-text {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 12px;
+      }
+      .loading-progress-track {
+        width: 100%;
+        height: 6px;
+        background: var(--border-light);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .loading-progress-bar {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 3px;
+        width: 0%;
+        transition: width 0.15s ease;
+      }
+      .loading-count {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 8px;
+        font-weight: 500;
+      }
+
       /* ── Print ── */
       @media print {
         @page {
@@ -897,6 +963,7 @@
         .bottom-bar,
         .toast,
         .modal-overlay,
+        .loading-overlay,
         .placeholder-icon,
         .edit-badge,
         .template-layer,
@@ -1291,6 +1358,17 @@
       </div>
     </div>
 
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-card">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">Loading images…</div>
+        <div class="loading-progress-track">
+          <div class="loading-progress-bar" id="loadingBar"></div>
+        </div>
+        <div class="loading-count" id="loadingCount"></div>
+      </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <script>
@@ -1367,6 +1445,42 @@
         }
 
         loadCellImages();
+
+        // ── Image compression (resize large photos before storing) ──
+        const MAX_IMG_DIM = 800; // max width or height in px — plenty for small stickers
+        const JPEG_QUALITY = 0.82;
+
+        function resizeImage(file) {
+          return new Promise((resolve) => {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+              let { width: w, height: h } = img;
+              // Only resize if larger than max
+              if (w > MAX_IMG_DIM || h > MAX_IMG_DIM) {
+                const ratio = Math.min(MAX_IMG_DIM / w, MAX_IMG_DIM / h);
+                w = Math.round(w * ratio);
+                h = Math.round(h * ratio);
+              }
+              const cvs = document.createElement("canvas");
+              cvs.width = w;
+              cvs.height = h;
+              const ctx = cvs.getContext("2d");
+              ctx.drawImage(img, 0, 0, w, h);
+              URL.revokeObjectURL(url);
+              resolve(cvs.toDataURL("image/jpeg", JPEG_QUALITY));
+            };
+            img.onerror = () => {
+              URL.revokeObjectURL(url);
+              // Fallback: read as-is
+              const reader = new FileReader();
+              reader.onload = (e) => resolve(e.target.result);
+              reader.readAsDataURL(file);
+            };
+            img.src = url;
+          });
+        }
+
         const MONTH_NAMES = [
           "January",
           "February",
@@ -1446,6 +1560,27 @@
         const modalFitBtn = $("modalFitBtn");
         const modalFitText = $("modalFitText");
         const modalCellNum = $("modalCellNum");
+
+        // ── Loading overlay helpers ──
+        const loadingOverlay = $("loadingOverlay");
+        const loadingBar = $("loadingBar");
+        const loadingText = $("loadingText");
+        const loadingCount = $("loadingCount");
+
+        function showLoading(total) {
+          loadingText.textContent = "Loading images…";
+          loadingBar.style.width = "0%";
+          loadingCount.textContent = `0 / ${total}`;
+          loadingOverlay.classList.add("active");
+        }
+        function updateLoading(done, total) {
+          const pct = Math.round((done / total) * 100);
+          loadingBar.style.width = pct + "%";
+          loadingCount.textContent = `${done} / ${total}`;
+        }
+        function hideLoading() {
+          loadingOverlay.classList.remove("active");
+        }
 
         // ── Unit conversions (to/from mm) ──
         function toMM(v, u) {
@@ -2197,53 +2332,57 @@
 
             if (pendingReplace && editingKey !== null) {
               // Replace mode — single file only
-              const reader = new FileReader();
-              reader.onload = (ev) => {
-                const url = ev.target.result;
+              resizeImage(files[0]).then((url) => {
                 editingDataUrl = url;
                 cellImages[activeKey] = { dataUrl: url, fit: editingFit };
                 saveCellImages();
                 refreshModalPreview();
                 pendingReplace = false;
-              };
-              reader.readAsDataURL(files[0]);
+              });
             } else if (files.length === 1) {
               // Single file — place in the clicked cell
-              const reader = new FileReader();
-              reader.onload = (ev) => {
-                cellImages[activeKey] = { dataUrl: ev.target.result, fit: "cover" };
+              resizeImage(files[0]).then((url) => {
+                cellImages[activeKey] = { dataUrl: url, fit: "cover" };
                 saveCellImages();
                 render();
                 showToast("Image added");
-              };
-              reader.readAsDataURL(files[0]);
+              });
             } else {
-              // Multi-file — auto-place in empty cells starting from clicked cell
+              // Multi-file — auto-place with progress
               const emptyKeys = getEmptyCellKeys(activeKey);
               const filesToPlace = files.slice(0, emptyKeys.length);
-              let loaded = 0;
-
-              filesToPlace.forEach((file, i) => {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                  cellImages[emptyKeys[i]] = { dataUrl: ev.target.result, fit: "cover" };
-                  loaded++;
-                  if (loaded === filesToPlace.length) {
-                    saveCellImages();
-                    render();
-                    const placed = filesToPlace.length;
-                    const skipped = files.length - placed;
-                    let msg = `${placed} image${placed !== 1 ? "s" : ""} added`;
-                    if (skipped > 0) msg += ` · ${skipped} skipped (no space)`;
-                    showToast(msg);
-                  }
-                };
-                reader.readAsDataURL(file);
-              });
+              const skipped = files.length - filesToPlace.length;
 
               if (filesToPlace.length === 0) {
                 showToast("No empty cells available");
+                return;
               }
+
+              showLoading(filesToPlace.length);
+              let loaded = 0;
+
+              // Process images sequentially to avoid memory spikes on mobile
+              async function processFiles() {
+                const BATCH_SIZE = 4;
+                for (let i = 0; i < filesToPlace.length; i++) {
+                  const url = await resizeImage(filesToPlace[i]);
+                  cellImages[emptyKeys[i]] = { dataUrl: url, fit: "cover" };
+                  loaded++;
+                  updateLoading(loaded, filesToPlace.length);
+                  // Render periodically so user sees progress on the grid
+                  if (loaded % BATCH_SIZE === 0 || loaded === filesToPlace.length) {
+                    render();
+                    // Yield to browser to paint the frame
+                    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+                  }
+                }
+                saveCellImages();
+                hideLoading();
+                let msg = `${loaded} image${loaded !== 1 ? "s" : ""} added`;
+                if (skipped > 0) msg += ` · ${skipped} skipped (no space)`;
+                showToast(msg);
+              }
+              processFiles();
             }
           });
 
